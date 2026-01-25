@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-01-25 18:06:49.121",
-  "timestamp_unix": 1769382409.12169,
-  "event": "Found run 4: 4444",
+  "timestamp": "2026-01-25 18:06:49.636",
+  "timestamp_unix": 1769382409.636663,
+  "event": "Found run 5: 99999",
   "running": true,
   "target_digits": 1250000000000000,
   "target_digits_formatted": "1250.00T",
   "current_position": 100000000,
   "current_position_formatted": "100.00M",
   "percent_complete": 0.0,
-  "elapsed_seconds": 33.227657079696655,
-  "elapsed_formatted": "33.228s",
+  "elapsed_seconds": 33.74263000488281,
+  "elapsed_formatted": "33.743s",
   "rate": 3107783.5785533246,
   "rate_formatted": "3.11M/s",
-  "patterns_found": 3,
+  "patterns_found": 4,
   "max_run_searching": 100,
-  "longest_run_found": 4,
+  "longest_run_found": 5,
   "next_pattern_estimate": null,
   "results": [
     {
@@ -52,6 +52,18 @@
       "elapsed_total_formatted": "33.227s",
       "elapsed_since_last_seconds": 0.5266060829162598,
       "elapsed_since_last_formatted": "527ms"
+    },
+    {
+      "run_length": 5,
+      "sequence": "99999",
+      "position": 6401,
+      "position_formatted": "6,401",
+      "found_at_timestamp": "2026-01-25 18:06:49.636",
+      "found_at_unix": 1769382409.63635,
+      "elapsed_total_seconds": 33.74231696128845,
+      "elapsed_total_formatted": "33.742s",
+      "elapsed_since_last_seconds": 0.5148868560791016,
+      "elapsed_since_last_formatted": "515ms"
     }
   ],
   "start_time": "2026-01-25 18:06:15.894",
