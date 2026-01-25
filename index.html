@@ -1,0 +1,2648 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Ratio Numbers - Run Finder</title>
+    <meta name="description" content="Discovering repeating digit patterns in the Golden Ratio (phi = 1.618033988749...)">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: #ffffff;
+            color: #1a1a2e;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #mouse-trail-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .content {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .phi-symbol {
+            font-size: 120px;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #FFD700, #FFA500, #FFDF00, #FFD700);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s ease-in-out infinite, glowPulse 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 30px rgba(255, 255, 0, 0.8));
+        }
+
+        @keyframes glowPulse {
+            0%, 100% {
+                filter: drop-shadow(0 0 20px rgba(255, 255, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 215, 0, 0.4));
+            }
+            50% {
+                filter: drop-shadow(0 0 40px rgba(255, 255, 0, 1)) drop-shadow(0 0 80px rgba(255, 215, 0, 0.8)) drop-shadow(0 0 120px rgba(255, 255, 0, 0.4));
+            }
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            margin: 20px 0;
+            color: #1a1a2e;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .phi-value {
+            font-size: 1.1rem;
+            color: #228B22;
+            letter-spacing: 2px;
+        }
+
+        .status-banner {
+            background: linear-gradient(135deg, #39ff14, #00ff41);
+            color: #1a1a2e;
+            padding: 15px 30px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            margin: 30px 0;
+            box-shadow: 0 4px 20px rgba(57, 255, 20, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-banner svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 4px 20px rgba(57, 255, 20, 0.4); }
+            50% { transform: scale(1.02); box-shadow: 0 4px 30px rgba(57, 255, 20, 0.6); }
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(57, 255, 20, 0.3);
+        }
+
+        .section h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: #228B22;
+            margin-bottom: 25px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section h2 svg {
+            width: 28px;
+            height: 28px;
+            fill: #39ff14;
+            filter: drop-shadow(0 0 5px rgba(57, 255, 20, 0.5));
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(57, 255, 20, 0.2);
+        }
+
+        .results-table th {
+            background: linear-gradient(135deg, #39ff14, #00ff41);
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+
+        .results-table tr:hover {
+            background: rgba(57, 255, 20, 0.1);
+        }
+
+        .run-sequence {
+            font-family: 'Space Mono', monospace;
+            background: linear-gradient(135deg, #39ff14, #00ff41);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .position {
+            color: #666;
+        }
+
+        .found-badge {
+            background: linear-gradient(135deg, #39ff14, #00ff41);
+            color: #1a1a2e;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+        }
+
+        .searching-badge {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #1a1a2e;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(57, 255, 20, 0.1), rgba(0, 255, 65, 0.1));
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(57, 255, 20, 0.3);
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: #228B22;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+
+        .timeline {
+            margin-top: 20px;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 20px;
+            padding: 20px 0;
+            border-left: 3px solid #39ff14;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 25px;
+            width: 13px;
+            height: 13px;
+            background: #39ff14;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+
+        .timeline-date {
+            font-weight: bold;
+            color: #228B22;
+            min-width: 150px;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            color: #39ff14;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            border: 1px solid rgba(57, 255, 20, 0.3);
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.1);
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        /* Mac Terminal Styles */
+        .mac-terminal {
+            background: #1e1e1e;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 40px rgba(57, 255, 20, 0.1);
+            font-family: 'SF Mono', 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 13px;
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .mac-terminal.expanded {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            z-index: 1000;
+            border-radius: 12px;
+            max-width: none;
+        }
+
+        .mac-terminal.expanded .terminal-body {
+            max-height: none;
+            height: calc(100% - 140px);
+        }
+
+        .mac-terminal.expanded .terminal-split {
+            height: calc(100% - 100px);
+        }
+
+        .terminal-header {
+            background: linear-gradient(180deg, #3c3c3c 0%, #2a2a2a 100%);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .terminal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .terminal-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: filter 0.2s;
+        }
+
+        .terminal-btn:hover {
+            filter: brightness(1.2);
+        }
+
+        .terminal-btn.close { background: #ff5f56; }
+        .terminal-btn.minimize { background: #ffbd2e; }
+        .terminal-btn.maximize { background: #27c93f; }
+
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .terminal-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .terminal-action-btn {
+            background: #333;
+            border: 1px solid #444;
+            color: #999;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .terminal-action-btn:hover {
+            background: #444;
+            color: #fff;
+        }
+
+        /* Split pane layout */
+        .terminal-split {
+            display: flex;
+            height: 500px;
+            background: #0d0d0d;
+        }
+
+        .terminal-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #333;
+            min-width: 0;
+        }
+
+        .terminal-sidebar {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            background: #111;
+        }
+
+        .sidebar-header {
+            padding: 10px 15px;
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+            color: #39ff14;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .sidebar-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb {
+            background: #39ff14;
+            border-radius: 3px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            margin: 4px 0;
+            background: #1a1a1a;
+            border-radius: 6px;
+            border-left: 3px solid #333;
+            transition: all 0.3s;
+        }
+
+        .result-item.found {
+            border-left-color: #39ff14;
+            animation: result-flash 0.5s ease;
+        }
+
+        .result-item.searching {
+            border-left-color: #ffd700;
+            animation: searching-pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes result-flash {
+            0% { background: #39ff14; }
+            100% { background: #1a1a1a; }
+        }
+
+        @keyframes searching-pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .result-len {
+            color: #888;
+            font-size: 11px;
+        }
+
+        .result-seq {
+            color: #39ff14;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .result-pos {
+            color: #ffd700;
+            font-size: 10px;
+        }
+
+        /* Digit stream area */
+        .digit-stream {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.8;
+            letter-spacing: 1px;
+            word-break: break-all;
+        }
+
+        .digit-stream::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .digit-stream::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        .digit-stream::-webkit-scrollbar-thumb {
+            background: #39ff14;
+            border-radius: 4px;
+        }
+
+        /* Status bar */
+        .terminal-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 15px;
+            background: #1a1a1a;
+            border-top: 1px solid #333;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #39ff14;
+            animation: status-blink 1s ease-in-out infinite;
+        }
+
+        .status-dot.idle {
+            background: #888;
+            animation: none;
+        }
+
+        @keyframes status-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .terminal-body {
+            padding: 15px;
+            min-height: 300px;
+            max-height: 450px;
+            overflow-y: auto;
+            background: #0d0d0d;
+        }
+
+        .terminal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal-body::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        .terminal-body::-webkit-scrollbar-thumb {
+            background: #39ff14;
+            border-radius: 4px;
+        }
+
+        .terminal-line {
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .boot-line {
+            color: #39ff14;
+            margin-bottom: 10px;
+        }
+
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background: #0d0d0d;
+            border-top: 1px solid #222;
+        }
+
+        .terminal-prompt {
+            white-space: nowrap;
+            margin-right: 8px;
+        }
+
+        .terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: inherit;
+            font-size: inherit;
+            outline: none;
+            caret-color: #39ff14;
+        }
+
+        .terminal-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #39ff14;
+            animation: blink-cursor 1s step-end infinite;
+            margin-left: 2px;
+        }
+
+        @keyframes blink-cursor {
+            50% { opacity: 0; }
+        }
+
+        /* Resize handle */
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, #39ff14 50%);
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+
+        .resize-handle:hover {
+            opacity: 1;
+        }
+
+        /* Terminal overlay for fullscreen */
+        .terminal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+        }
+
+        .terminal-overlay.visible {
+            display: block;
+        }
+
+        /* Terminal Colors */
+        .term-green { color: #39ff14; }
+        .term-cyan { color: #00d4ff; }
+        .term-yellow { color: #ffff00; }
+        .term-gold { color: #ffd700; }
+        .term-orange { color: #ff8c00; }
+        .term-red { color: #ff4444; }
+        .term-magenta { color: #ff00ff; }
+        .term-pink { color: #ff69b4; }
+        .term-white { color: #ffffff; }
+        .term-dim { color: #666; }
+        .term-bold { font-weight: bold; }
+
+        /* Digit Colors */
+        .d-white { color: #ffffff; }
+        .d-neon { color: #39ff14; font-weight: bold; text-shadow: 0 0 8px rgba(57,255,20,0.8); }
+        .d-neon-bright { color: #00ff41; font-weight: bold; text-shadow: 0 0 12px rgba(0,255,65,0.9), 0 0 20px rgba(57,255,20,0.6); }
+        .d-gold { color: #ffd700; font-weight: bold; text-shadow: 0 0 8px rgba(255,215,0,0.6); }
+        /* Legacy colors kept for compatibility */
+        .d-cyan { color: #00d4ff; font-weight: bold; }
+        .d-green { color: #39ff14; font-weight: bold; }
+        .d-yellow { color: #ffff00; font-weight: bold; text-shadow: 0 0 5px rgba(255,255,0,0.5); }
+        .d-orange { color: #ff8c00; font-weight: bold; text-shadow: 0 0 10px rgba(255,140,0,0.7); }
+        .d-red { color: #ff4444; font-weight: bold; text-shadow: 0 0 12px rgba(255,68,68,0.8); }
+        .d-magenta { color: #ff00ff; font-weight: bold; text-shadow: 0 0 15px rgba(255,0,255,0.8); }
+        .d-pink { color: #ff69b4; font-weight: bold; text-shadow: 0 0 18px rgba(255,105,180,0.9); animation: glow-pulse 0.5s ease-in-out infinite; }
+
+        @keyframes glow-pulse {
+            0%, 100% { text-shadow: 0 0 15px currentColor; }
+            50% { text-shadow: 0 0 25px currentColor, 0 0 35px currentColor; }
+        }
+
+        /* Terminal Control Buttons */
+        .terminal-control-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #39ff14, #00ff41);
+            color: #1a1a2e;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Space Mono', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .terminal-control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(57, 255, 20, 0.4);
+        }
+
+        .terminal-control-btn.secondary {
+            background: linear-gradient(135deg, #333, #555);
+            color: #fff;
+        }
+
+        .terminal-control-btn.secondary:hover {
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Code Display Styles */
+        .code-container {
+            background: #0d1117;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #30363d;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .code-filename {
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
+
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #30363d;
+            border-color: #8b949e;
+        }
+
+        .copy-btn.copied {
+            background: #238636;
+            border-color: #2ea043;
+            color: #fff;
+        }
+
+        .js-code {
+            margin: 0;
+            padding: 20px;
+            background: #0d1117;
+            color: #c9d1d9;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        .js-keyword { color: #ff7b72; }
+        .js-string { color: #a5d6ff; }
+        .js-number { color: #79c0ff; }
+        .js-comment { color: #8b949e; font-style: italic; }
+        .js-function { color: #d2a8ff; }
+        .js-class { color: #ffa657; }
+
+        @media (max-width: 768px) {
+            .phi-symbol {
+                font-size: 80px;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            .section {
+                padding: 25px;
+            }
+            .results-table th,
+            .results-table td {
+                padding: 10px 5px;
+                font-size: 0.85rem;
+            }
+            .mac-terminal {
+                font-size: 11px;
+            }
+            .terminal-body {
+                min-height: 200px;
+                max-height: 350px;
+            }
+            .boot-line {
+                font-size: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas-container"></canvas>
+    <canvas id="mouse-trail-canvas"></canvas>
+
+    <div class="content">
+        <header>
+            <div class="phi-symbol">&#966;</div>
+            <h1>Golden Ratio Numbers</h1>
+            <p class="subtitle">Discovering Repeating Digit Patterns in the Golden Ratio</p>
+            <p class="phi-value">&#966; = 1.6180339887498948482045868343656381177203091798057...</p>
+            <div class="status-banner">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 6v6l4 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                CURRENTLY SEARCHING: 1 TRILLION DIGITS
+            </div>
+        </header>
+
+        <div class="section">
+            <h2>
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                Current Search Progress
+            </h2>
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card" id="stat-target">
+                    <div class="stat-value">1T</div>
+                    <div class="stat-label">Target Digits</div>
+                </div>
+                <div class="stat-card" id="stat-searched">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Digits Searched</div>
+                </div>
+                <div class="stat-card" id="stat-patterns">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Patterns Found</div>
+                </div>
+                <div class="stat-card" id="stat-longest">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Longest Run</div>
+                </div>
+                <div class="stat-card" id="stat-elapsed">
+                    <div class="stat-value">--</div>
+                    <div class="stat-label">Elapsed Time</div>
+                </div>
+                <div class="stat-card" id="stat-eta">
+                    <div class="stat-value">--</div>
+                    <div class="stat-label">Est. Completion</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                Discovered Patterns
+            </h2>
+            <p>First occurrence of consecutive identical digits in &#966;:</p>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Run Length</th>
+                        <th>Sequence</th>
+                        <th>Position</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2</td>
+                        <td class="run-sequence">33</td>
+                        <td class="position">7</td>
+                        <td><span class="found-badge">FOUND</span></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td class="run-sequence">222</td>
+                        <td class="position">131</td>
+                        <td><span class="found-badge">FOUND</span></td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td class="run-sequence">4444</td>
+                        <td class="position">1,218</td>
+                        <td><span class="found-badge">FOUND</span></td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td class="run-sequence">99999</td>
+                        <td class="position">6,401</td>
+                        <td><span class="found-badge">FOUND</span></td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td class="run-sequence">555555</td>
+                        <td class="position">99,790</td>
+                        <td><span class="found-badge">FOUND</span></td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td class="run-sequence">5555555</td>
+                        <td class="position">771,952</td>
+                        <td><span class="found-badge">FOUND</span></td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td class="run-sequence">55555555</td>
+                        <td class="position">771,952</td>
+                        <td><span class="found-badge">FOUND</span></td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td class="run-sequence">333333333</td>
+                        <td class="position">314,529,196</td>
+                        <td><span class="found-badge">FOUND</span></td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td class="run-sequence">??????????</td>
+                        <td class="position">Searching...</td>
+                        <td><span class="searching-badge">SEARCHING</span></td>
+                    </tr>
+                    <tr>
+                        <td>11-100</td>
+                        <td class="run-sequence">...</td>
+                        <td class="position">Pending...</td>
+                        <td><span class="searching-badge">PENDING</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
+                    <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
+                    <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Research Timeline
+            </h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">January 25, 2026</div>
+                    <div class="timeline-content">
+                        <strong>First Test Started</strong><br>
+                        Began searching 1 trillion digits of &#966; for runs of up to 100 consecutive identical digits.
+                        Found patterns up to length 9 (333333333 at position 314,529,196).
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">February 3, 2026</div>
+                    <div class="timeline-content">
+                        <strong>Next Update (Estimated)</strong><br>
+                        Extended search results and potential discovery of run length 10+.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>
+                <svg viewBox="0 0 24 24">
+                    <polyline points="16 18 22 12 16 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="8 6 2 12 8 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                The Search Command
+            </h2>
+            <div class="code-block">
+<pre>python goldenratiofinder.py --max-digits 1T --max-run 100 --save phi_runs.json
+
+======================================================================
+Golden Ratio (&#966;) Run Finder - mpmath Computation
+======================================================================
+Target: 1.00T digits
+Looking for: runs of 2 to 100 identical digits
+Backend: mpmath
+======================================================================</pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 16v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="12" cy="8" r="1" fill="currentColor"/>
+                </svg>
+                About the Golden Ratio
+            </h2>
+            <p>
+                The Golden Ratio (&#966;) is an irrational number approximately equal to 1.618033988749...
+                Like pi, its decimal expansion goes on forever without repeating. This project searches
+                for the first occurrence of each "run" - consecutive identical digits - within the
+                decimal expansion of &#966;.
+            </p>
+            <br>
+            <p>
+                <strong>Interesting fact:</strong> The run of 8 identical 5's (55555555) starts at the same
+                position as the run of 7 identical 5's - position 771,952. This means there's actually
+                a run of at least 8 consecutive 5's at that location!
+            </p>
+        </div>
+
+        <!-- Interactive Terminal Section -->
+        <div class="section">
+            <h2>
+                <svg viewBox="0 0 24 24">
+                    <rect x="2" y="3" width="20" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M6 9l4 3-4 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <line x1="12" y1="15" x2="18" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Try It Yourself - Interactive Terminal
+            </h2>
+            <p style="margin-bottom: 20px;">Run the Golden Ratio pattern finder directly in your browser. Type <code style="background: #1a1a2e; color: #39ff14; padding: 2px 8px; border-radius: 4px;">help</code> for commands.</p>
+
+            <!-- Terminal Overlay for fullscreen -->
+            <div class="terminal-overlay" id="terminal-overlay"></div>
+
+            <!-- Mac-style Terminal Window -->
+            <div class="mac-terminal" id="mac-terminal">
+                <div class="terminal-header">
+                    <div class="terminal-buttons">
+                        <span class="terminal-btn close" onclick="terminalRun('clear')"></span>
+                        <span class="terminal-btn minimize" onclick="toggleTerminalSize('minimize')"></span>
+                        <span class="terminal-btn maximize" onclick="toggleTerminalSize('maximize')"></span>
+                    </div>
+                    <div class="terminal-title">golden_ratio_patterns.py -- bash -- 80x24</div>
+                    <div class="terminal-actions">
+                        <button class="terminal-action-btn" onclick="toggleTerminalSize('expand')">Expand</button>
+                        <button class="terminal-action-btn" onclick="toggleTerminalSize('fullscreen')">Fullscreen</button>
+                    </div>
+                </div>
+
+                <!-- Split pane layout -->
+                <div class="terminal-split">
+                    <!-- Main digit stream area -->
+                    <div class="terminal-main">
+                        <div class="digit-stream" id="digit-stream">
+                            <div class="terminal-line boot-line" style="white-space: pre; font-size: 11px;">
+<span class="term-cyan">    _____ _     _   ______ _           _           </span>
+<span class="term-cyan">   |  __ \ |   (_) |  ____(_)         | |          </span>
+<span class="term-cyan">   | |__) | |__  _  | |__   _ _ __   __| | ___ _ __ </span>
+<span class="term-cyan">   |  ___/| '_ \| | |  __| | | '_ \ / _` |/ _ \ '__|</span>
+<span class="term-cyan">   | |    | | | | | | |    | | | | | (_| |  __/ |   </span>
+<span class="term-cyan">   |_|    |_| |_|_| |_|    |_|_| |_|\__,_|\___|_|   </span>
+                            </div>
+                            <div class="terminal-line"><span class="term-gold">Golden Ratio Pattern Finder v2.4 - Sound Effects</span></div>
+                            <div class="terminal-line"><span class="term-dim">Click 'Stream Digits' to see phi computed digit-by-digit</span></div>
+                            <div class="terminal-line" id="stream-output"></div>
+                        </div>
+                        <div class="terminal-input-line">
+                            <span class="terminal-prompt"><span class="term-green">phi</span><span class="term-white">@</span><span class="term-cyan">finder</span> <span class="term-magenta">~</span> <span class="term-gold">$</span></span>
+                            <input type="text" id="terminal-input" class="terminal-input" autocomplete="off" spellcheck="false" placeholder="Type 'help' or click buttons below...">
+                        </div>
+                    </div>
+
+                    <!-- Results sidebar -->
+                    <div class="terminal-sidebar">
+                        <div class="sidebar-header">
+                            <svg viewBox="0 0 24 24" width="12" height="12" style="fill: #39ff14; margin-right: 6px; vertical-align: middle;">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                            Live Results
+                        </div>
+                        <div class="sidebar-content" id="results-sidebar">
+                            <div class="result-item searching">
+                                <span class="result-len">Run 2</span>
+                                <span class="result-seq">--</span>
+                                <span class="result-pos">waiting...</span>
+                            </div>
+                            <div class="result-item searching">
+                                <span class="result-len">Run 3</span>
+                                <span class="result-seq">--</span>
+                                <span class="result-pos">waiting...</span>
+                            </div>
+                            <div class="result-item searching">
+                                <span class="result-len">Run 4</span>
+                                <span class="result-seq">--</span>
+                                <span class="result-pos">waiting...</span>
+                            </div>
+                            <div class="result-item searching">
+                                <span class="result-len">Run 5</span>
+                                <span class="result-seq">--</span>
+                                <span class="result-pos">waiting...</span>
+                            </div>
+                            <div class="result-item searching">
+                                <span class="result-len">Run 6</span>
+                                <span class="result-seq">--</span>
+                                <span class="result-pos">waiting...</span>
+                            </div>
+                            <div class="result-item searching">
+                                <span class="result-len">Run 7</span>
+                                <span class="result-seq">--</span>
+                                <span class="result-pos">waiting...</span>
+                            </div>
+                            <div class="result-item searching">
+                                <span class="result-len">Run 8</span>
+                                <span class="result-seq">--</span>
+                                <span class="result-pos">waiting...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status bar -->
+                <div class="terminal-status">
+                    <div class="status-item">
+                        <span class="status-dot idle" id="status-dot"></span>
+                        <span id="status-text">Ready</span>
+                    </div>
+                    <div class="status-item">
+                        <span id="digit-count">0</span> digits | <span id="elapsed-time">0.0s</span>
+                    </div>
+                    <div class="status-item">
+                        Longest: <span id="longest-run" class="term-gold">0</span>
+                    </div>
+                </div>
+
+                <div class="resize-handle" id="resize-handle"></div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="startStreaming(10000)" class="terminal-control-btn" id="btn-stream">
+                    <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 6px;">
+                        <polygon points="5,3 19,12 5,21" fill="currentColor"/>
+                    </svg>
+                    Stream Digits (10K)
+                </button>
+                <button onclick="startStreaming(50000)" class="terminal-control-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 6px;">
+                        <polygon points="5,3 19,12 5,21" fill="currentColor"/>
+                    </svg>
+                    Stream (50K)
+                </button>
+                <button onclick="startStreaming(100000)" class="terminal-control-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 6px;">
+                        <polygon points="5,3 19,12 5,21" fill="currentColor"/>
+                    </svg>
+                    Extended (100K)
+                </button>
+                <button onclick="stopStreaming()" class="terminal-control-btn secondary" id="btn-stop" style="display: none;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 6px;">
+                        <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
+                    </svg>
+                    Stop
+                </button>
+                <button onclick="clearTerminal()" class="terminal-control-btn secondary">
+                    <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 6px;">
+                        <path d="M3 6h18M8 6V4h8v2M5 6v14a2 2 0 002 2h10a2 2 0 002-2V6" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Clear
+                </button>
+                <button onclick="toggleTerminalSize('fullscreen')" class="terminal-control-btn secondary">
+                    <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 6px;">
+                        <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Fullscreen
+                </button>
+            </div>
+        </div>
+
+        <!-- JavaScript Source Code Section -->
+        <div class="section">
+            <h2>
+                <svg viewBox="0 0 24 24">
+                    <polyline points="16 18 22 12 16 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="8 6 2 12 8 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Python Source Code
+            </h2>
+            <p style="margin-bottom: 15px;">Copy this code to run the Golden Ratio pattern finder on your system.</p>
+
+            <div style="background: #1a1a2e; border-radius: 8px; padding: 15px; margin-bottom: 15px; font-family: monospace; font-size: 0.9rem;">
+                <div style="color: #cc66ff; margin-bottom: 10px;">✓ Requirements:</div>
+                <div style="color: #666; margin-bottom: 3px; padding-left: 15px;">• Python 3.6+</div>
+                <div style="color: #666; margin-bottom: 10px; padding-left: 15px;">• mpmath library (for arbitrary precision math)</div>
+                <div style="color: #ff9933; margin-bottom: 8px;">Install mpmath first:</div>
+                <div style="background: #0d0d1a; padding: 10px; border-radius: 4px; color: #fff; margin-bottom: 5px;">
+                    <span style="color: #39ff14;">$</span> pip3 install mpmath
+                </div>
+                <div style="color: #666; font-size: 0.8rem;">macOS users may need: <span style="color: #00ffff;">pip3 install mpmath --break-system-packages</span></div>
+            </div>
+
+            <div style="background: #1a1a2e; border-radius: 8px; padding: 15px; margin-bottom: 15px; font-family: monospace; font-size: 0.9rem;">
+                <div style="color: #39ff14; margin-bottom: 10px;">📋 Quick Start:</div>
+                <div style="color: #888; margin-bottom: 5px;">1. Install mpmath (see above)</div>
+                <div style="color: #888; margin-bottom: 5px;">2. Copy the code below (click "Copy Code")</div>
+                <div style="color: #888; margin-bottom: 5px;">3. Save as <span style="color: #00ffff;">golden_ratio_patterns.py</span></div>
+                <div style="color: #888; margin-bottom: 10px;">4. Run in terminal:</div>
+                <div style="background: #0d0d1a; padding: 10px; border-radius: 4px; color: #fff;">
+                    <span style="color: #39ff14;">$</span> python3 golden_ratio_patterns.py
+                </div>
+            </div>
+
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-filename">golden_ratio_patterns.py</span>
+                    <button onclick="copyCode()" class="copy-btn" id="copy-btn">
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            <rect x="9" y="9" width="13" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" fill="none" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span id="copy-text">Copy Code</span>
+                    </button>
+                </div>
+                <pre class="code-block js-code" id="js-source-code"><code><span class="js-comment">#!/usr/bin/env python3
+# golden_ratio_patterns.py - Interactive φ Run Finder with curses UI
+# pip3 install mpmath --break-system-packages
+# python3 golden_ratio_patterns.py</span>
+<span class="js-keyword">import</span> curses
+<span class="js-keyword">import</span> sys
+<span class="js-keyword">import</span> time
+<span class="js-keyword">from</span> mpmath <span class="js-keyword">import</span> mp
+
+DIGITS = <span class="js-number">333_333_333</span>  <span class="js-comment"># Calculate 333 million digits to find all 9 patterns</span>
+
+<span class="js-comment"># digit '0'..'9' → curses color_pair index (for runs ≥ 2)</span>
+RUN_COLOR_MAP = {
+    <span class="js-string">'0'</span>: <span class="js-number">2</span>,  <span class="js-string">'1'</span>: <span class="js-number">2</span>,  <span class="js-string">'2'</span>: <span class="js-number">3</span>,  <span class="js-string">'3'</span>: <span class="js-number">3</span>,  <span class="js-string">'4'</span>: <span class="js-number">4</span>,
+    <span class="js-string">'5'</span>: <span class="js-number">4</span>,  <span class="js-string">'6'</span>: <span class="js-number">5</span>,  <span class="js-string">'7'</span>: <span class="js-number">5</span>,  <span class="js-string">'8'</span>: <span class="js-number">6</span>,  <span class="js-string">'9'</span>: <span class="js-number">6</span>,
+}
+
+<span class="js-comment"># run-length n → highlight color_pair index</span>
+HIGHLIGHT_PAIR = {<span class="js-number">2</span>:<span class="js-number">2</span>, <span class="js-number">3</span>:<span class="js-number">4</span>, <span class="js-number">4</span>:<span class="js-number">3</span>, <span class="js-number">5</span>:<span class="js-number">7</span>, <span class="js-number">6</span>:<span class="js-number">8</span>, <span class="js-number">7</span>:<span class="js-number">9</span>, <span class="js-number">8</span>:<span class="js-number">10</span>, <span class="js-number">9</span>:<span class="js-number">11</span>}
+
+<span class="js-comment"># Known patterns in φ</span>
+KNOWN_PATTERNS = {
+    <span class="js-number">2</span>: (<span class="js-string">"33"</span>, <span class="js-number">7</span>),
+    <span class="js-number">3</span>: (<span class="js-string">"222"</span>, <span class="js-number">131</span>),
+    <span class="js-number">4</span>: (<span class="js-string">"4444"</span>, <span class="js-number">1218</span>),
+    <span class="js-number">5</span>: (<span class="js-string">"99999"</span>, <span class="js-number">6401</span>),
+    <span class="js-number">6</span>: (<span class="js-string">"555555"</span>, <span class="js-number">99790</span>),
+    <span class="js-number">7</span>: (<span class="js-string">"5555555"</span>, <span class="js-number">771952</span>),
+    <span class="js-number">8</span>: (<span class="js-string">"55555555"</span>, <span class="js-number">771952</span>),
+    <span class="js-number">9</span>: (<span class="js-string">"333333333"</span>, <span class="js-number">314529196</span>),
+}
+
+<span class="js-keyword">def</span> <span class="js-function">print_legend</span>(header_win, width):
+    header_win.addstr(<span class="js-number">1</span>, <span class="js-number">2</span>, <span class="js-string">"Len: "</span>, curses.A_BOLD)
+    col = <span class="js-number">7</span>
+    <span class="js-keyword">for</span> n <span class="js-keyword">in</span> range(<span class="js-number">2</span>, <span class="js-number">10</span>):
+        digit = KNOWN_PATTERNS[n][<span class="js-number">0</span>][<span class="js-number">0</span>]
+        label = <span class="js-string">f"{n}={digit}"</span>
+        attr = curses.A_REVERSE | curses.color_pair(HIGHLIGHT_PAIR[n])
+        <span class="js-keyword">if</span> col + len(label) + <span class="js-number">2</span> &lt; width - <span class="js-number">2</span>:
+            header_win.addstr(<span class="js-number">1</span>, col, label, attr)
+            col += len(label) + <span class="js-number">1</span>
+
+<span class="js-keyword">def</span> <span class="js-function">curses_main</span>(stdscr):
+    curses.curs_set(<span class="js-number">0</span>)
+    curses.start_color()
+    curses.use_default_colors()
+
+    <span class="js-keyword">for</span> i, c <span class="js-keyword">in</span> enumerate([curses.COLOR_WHITE, curses.COLOR_RED, curses.COLOR_GREEN,
+        curses.COLOR_YELLOW, curses.COLOR_BLUE, curses.COLOR_MAGENTA, curses.COLOR_CYAN,
+        curses.COLOR_BLUE, curses.COLOR_MAGENTA, curses.COLOR_RED, curses.COLOR_YELLOW], <span class="js-number">1</span>):
+        curses.init_pair(i, c, -<span class="js-number">1</span>)
+
+    h, w = stdscr.getmaxyx()
+    <span class="js-keyword">if</span> h &lt; <span class="js-number">20</span> <span class="js-keyword">or</span> w &lt; <span class="js-number">80</span>:
+        stdscr.addstr(<span class="js-number">0</span>, <span class="js-number">0</span>, <span class="js-string">"Terminal too small. Resize to at least 80×20."</span>)
+        stdscr.getch()
+        <span class="js-keyword">return</span>
+
+    header_win = curses.newwin(<span class="js-number">10</span>, w, <span class="js-number">0</span>, <span class="js-number">0</span>)
+    digit_win = curses.newwin(h - <span class="js-number">10</span>, w, <span class="js-number">10</span>, <span class="js-number">0</span>)
+    digit_win.scrollok(<span class="js-keyword">True</span>)
+    digit_win.idlok(<span class="js-keyword">True</span>)
+
+    title = <span class="js-string">"★ φ-Run Finder (333M digits, lengths 2…9) ★"</span>
+    header_win.addstr(<span class="js-number">0</span>, max(<span class="js-number">0</span>, (w // <span class="js-number">2</span>) - (len(title) // <span class="js-number">2</span>)), title, curses.A_BOLD)
+    print_legend(header_win, w)
+    <span class="js-keyword">for</span> n <span class="js-keyword">in</span> range(<span class="js-number">2</span>, <span class="js-number">10</span>):
+        header_win.addstr(n, <span class="js-number">2</span>, <span class="js-string">f"Len {n}: searching..."</span>)
+    header_win.refresh()
+
+    digit_win.addstr(<span class="js-string">"Computing φ to 333,333,333 digits...\n"</span>, curses.color_pair(<span class="js-number">4</span>))
+    digit_win.refresh()
+
+    compute_start = time.time()
+    mp.dps = DIGITS + <span class="js-number">100</span>
+    phi_str = mp.nstr((<span class="js-number">1</span> + mp.sqrt(<span class="js-number">5</span>)) / <span class="js-number">2</span>, DIGITS + <span class="js-number">2</span>, strip_zeros=<span class="js-keyword">False</span>)
+    compute_time = time.time() - compute_start
+
+    digit_win.addstr(<span class="js-string">f"Computed {len(phi_str)-2:,} digits in {compute_time:.1f}s\n\n"</span>, curses.color_pair(<span class="js-number">3</span>))
+    digit_win.refresh()
+    time.sleep(<span class="js-number">1</span>)
+
+    total_pos, run_char, run_len = <span class="js-number">0</span>, <span class="js-keyword">None</span>, <span class="js-number">0</span>
+    remaining, start_time = set(range(<span class="js-number">2</span>, <span class="js-number">10</span>)), time.time()
+
+    <span class="js-keyword">for</span> ch <span class="js-keyword">in</span> phi_str:
+        total_pos += <span class="js-number">1</span>
+        <span class="js-keyword">if</span> <span class="js-keyword">not</span> ch.isdigit():
+            run_char, run_len = <span class="js-keyword">None</span>, <span class="js-number">0</span>
+            <span class="js-keyword">continue</span>
+
+        run_len = run_len + <span class="js-number">1</span> <span class="js-keyword">if</span> ch == run_char <span class="js-keyword">else</span> <span class="js-number">1</span>
+        run_char = ch
+
+        <span class="js-keyword">if</span> run_len <span class="js-keyword">in</span> remaining:
+            n, start_pos = run_len, total_pos - run_len + <span class="js-number">1</span>
+            elapsed, seq = time.time() - start_time, run_char * n
+            <span class="js-keyword">if</span> elapsed &gt;= <span class="js-number">3600</span>:
+                time_str = <span class="js-string">f"{int(elapsed//3600)}h {int((elapsed%3600)//60)}m"</span>
+            <span class="js-keyword">elif</span> elapsed &gt;= <span class="js-number">60</span>:
+                time_str = <span class="js-string">f"{int(elapsed//60)}m {elapsed%60:.1f}s"</span>
+            <span class="js-keyword">else</span>:
+                time_str = <span class="js-string">f"{elapsed:.3f}s"</span>
+
+            info = <span class="js-string">f"Len {n}: {seq} @ {start_pos:,}   [{time_str}]"</span>
+            hl_attr = curses.A_REVERSE | curses.color_pair(HIGHLIGHT_PAIR[n])
+            header_win.move(n, <span class="js-number">2</span>)
+            header_win.clrtoeol()
+            header_win.addstr(n, <span class="js-number">2</span>, info[:w-<span class="js-number">4</span>], hl_attr)
+            header_win.refresh()
+            curses.beep()
+            time.sleep(<span class="js-number">1</span>)
+            remaining.remove(n)
+
+        pair = curses.color_pair(RUN_COLOR_MAP.get(run_char, <span class="js-number">1</span>)) <span class="js-keyword">if</span> run_len &gt;= <span class="js-number">2</span> <span class="js-keyword">else</span> curses.color_pair(<span class="js-number">1</span>)
+        <span class="js-keyword">if</span> run_len &gt;= <span class="js-number">2</span> <span class="js-keyword">and</span> run_char <span class="js-keyword">in</span> <span class="js-string">'13579'</span>: pair |= curses.A_BOLD
+        <span class="js-keyword">try</span>:
+            digit_win.addstr(ch, pair)
+        <span class="js-keyword">except</span> curses.error:
+            <span class="js-keyword">pass</span>
+        digit_win.refresh()
+
+    total_time = time.time() - start_time
+    time_str = <span class="js-string">f"{int(total_time//3600)}h {int((total_time%3600)//60)}m"</span> <span class="js-keyword">if</span> total_time &gt;= <span class="js-number">3600</span> <span class="js-keyword">else</span> <span class="js-string">f"{int(total_time//60)}m"</span>
+    digit_win.addstr(<span class="js-string">f"\n\n═══ COMPLETE ═══ All 9 patterns found in {time_str}\n"</span>, curses.color_pair(<span class="js-number">3</span>) | curses.A_BOLD)
+    digit_win.addstr(<span class="js-string">"Press any key to exit."</span>)
+    digit_win.refresh()
+    stdscr.nodelay(<span class="js-keyword">False</span>)
+    stdscr.getch()
+
+<span class="js-keyword">def</span> <span class="js-function">main</span>():
+    print(<span class="js-string">"★ φ-Run Finder ★"</span>)
+    print(<span class="js-string">f"Target: {DIGITS:,} digits"</span>)
+    print(<span class="js-string">"Starting curses interface...\n"</span>)
+    curses.wrapper(curses_main)
+
+<span class="js-keyword">if</span> __name__ == <span class="js-string">"__main__"</span>:
+    main()</code></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" fill="currentColor"/>
+                </svg>
+                Source Code
+            </h2>
+            <p>
+                This project is open source. You can verify and review all the code used to find these patterns.
+            </p>
+            <div style="margin-top: 20px;">
+                <a href="https://github.com/goldenrationumber" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #333, #24292e); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: transform 0.2s, box-shadow 0.2s;">
+                    <svg viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" fill="white"/>
+                    </svg>
+                    github.com/goldenrationumber
+                </a>
+            </div>
+            <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
+                View the Python source code for goldenratiofinder.py and verify our methodology.
+            </p>
+        </div>
+
+        <footer>
+            <p>Golden Ratio Numbers Research Project</p>
+            <p style="margin-top: 10px; font-size: 0.9rem;">
+                &#966; = (1 + &#8730;5) / 2
+            </p>
+            <p style="margin-top: 15px;">
+                <a href="https://github.com/goldenrationumber" target="_blank" rel="noopener noreferrer" style="color: #39ff14; text-decoration: none;">
+                    <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" fill="currentColor"/>
+                    </svg>
+                    View Source Code
+                </a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Rainbow Confetti Particles with Three.js
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById('canvas-container'),
+            alpha: true,
+            antialias: true
+        });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 0);
+        camera.position.z = 50;
+
+        // Create rainbow confetti particles
+        const particleCount = 500;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+        const sizes = new Float32Array(particleCount);
+        const velocities = [];
+
+        // Rainbow colors
+        const rainbowColors = [
+            new THREE.Color(0xff0000), // Red
+            new THREE.Color(0xff7f00), // Orange
+            new THREE.Color(0xffff00), // Yellow
+            new THREE.Color(0x00ff00), // Green
+            new THREE.Color(0x0000ff), // Blue
+            new THREE.Color(0x4b0082), // Indigo
+            new THREE.Color(0x9400d3), // Violet
+            new THREE.Color(0x39ff14), // Neon Green
+            new THREE.Color(0xff69b4), // Pink
+            new THREE.Color(0x00ffff), // Cyan
+        ];
+
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 100;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+
+            const color = rainbowColors[Math.floor(Math.random() * rainbowColors.length)];
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
+
+            sizes[i] = Math.random() * 2 + 0.5;
+
+            velocities.push({
+                x: (Math.random() - 0.5) * 0.1,
+                y: (Math.random() - 0.5) * 0.1 - 0.02,
+                z: (Math.random() - 0.5) * 0.05,
+                rotationSpeed: Math.random() * 0.02
+            });
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+        const material = new THREE.PointsMaterial({
+            size: 1,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        // Animation loop for confetti
+        function animateConfetti() {
+            requestAnimationFrame(animateConfetti);
+
+            const positions = particles.geometry.attributes.position.array;
+
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] += velocities[i].x;
+                positions[i * 3 + 1] += velocities[i].y;
+                positions[i * 3 + 2] += velocities[i].z;
+
+                // Reset particle if it goes out of bounds
+                if (positions[i * 3 + 1] < -50) {
+                    positions[i * 3] = (Math.random() - 0.5) * 100;
+                    positions[i * 3 + 1] = 50;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+                }
+
+                // Gentle swaying
+                positions[i * 3] += Math.sin(Date.now() * 0.001 + i) * 0.02;
+            }
+
+            particles.geometry.attributes.position.needsUpdate = true;
+            particles.rotation.y += 0.0005;
+
+            renderer.render(scene, camera);
+        }
+
+        animateConfetti();
+
+        // Mouse Trail with Neon Green Sparkles
+        const trailCanvas = document.getElementById('mouse-trail-canvas');
+        const ctx = trailCanvas.getContext('2d');
+        trailCanvas.width = window.innerWidth;
+        trailCanvas.height = window.innerHeight;
+
+        const sparkles = [];
+        let mouseX = 0;
+        let mouseY = 0;
+
+        class Sparkle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 8 + 4;
+                this.speedX = (Math.random() - 0.5) * 3;
+                this.speedY = (Math.random() - 0.5) * 3;
+                this.life = 1;
+                this.decay = Math.random() * 0.02 + 0.01;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.2;
+
+                // Neon bright green variations
+                const greenHues = [
+                    'rgba(57, 255, 20,',    // Neon green
+                    'rgba(0, 255, 65,',     // Bright green
+                    'rgba(50, 205, 50,',    // Lime green
+                    'rgba(127, 255, 0,',    // Chartreuse
+                    'rgba(0, 255, 127,',    // Spring green
+                ];
+                this.color = greenHues[Math.floor(Math.random() * greenHues.length)];
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.speedY += 0.05; // Gravity
+                this.life -= this.decay;
+                this.rotation += this.rotationSpeed;
+                this.size *= 0.98;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                // Draw star/sparkle shape
+                ctx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i * Math.PI * 2) / 5 - Math.PI / 2;
+                    const innerAngle = angle + Math.PI / 5;
+
+                    if (i === 0) {
+                        ctx.moveTo(
+                            Math.cos(angle) * this.size,
+                            Math.sin(angle) * this.size
+                        );
+                    } else {
+                        ctx.lineTo(
+                            Math.cos(angle) * this.size,
+                            Math.sin(angle) * this.size
+                        );
+                    }
+                    ctx.lineTo(
+                        Math.cos(innerAngle) * (this.size * 0.4),
+                        Math.sin(innerAngle) * (this.size * 0.4)
+                    );
+                }
+                ctx.closePath();
+
+                ctx.fillStyle = this.color + this.life + ')';
+                ctx.shadowColor = 'rgba(57, 255, 20, 0.8)';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+
+            // Create multiple sparkles per mouse move
+            for (let i = 0; i < 3; i++) {
+                sparkles.push(new Sparkle(
+                    mouseX + (Math.random() - 0.5) * 20,
+                    mouseY + (Math.random() - 0.5) * 20
+                ));
+            }
+        });
+
+        function animateSparkles() {
+            ctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+
+            for (let i = sparkles.length - 1; i >= 0; i--) {
+                sparkles[i].update();
+                sparkles[i].draw();
+
+                if (sparkles[i].life <= 0 || sparkles[i].size < 0.5) {
+                    sparkles.splice(i, 1);
+                }
+            }
+
+            // Limit sparkle count for performance
+            if (sparkles.length > 200) {
+                sparkles.splice(0, sparkles.length - 200);
+            }
+
+            requestAnimationFrame(animateSparkles);
+        }
+
+        animateSparkles();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            trailCanvas.width = window.innerWidth;
+            trailCanvas.height = window.innerHeight;
+        });
+
+        // =====================================================================
+        // LIVE DATA UPDATES
+        // =====================================================================
+        const LIVE_DATA_URL = 'live_status.json';
+        const UPDATE_INTERVAL = 5000; // 5 seconds
+
+        // Store elements for updates
+        const liveElements = {
+            targetDigits: null,
+            digitsSearched: null,
+            patternsFound: null,
+            longestRun: null,
+            elapsedTime: null,
+            eta: null,
+            resultsTableBody: null,
+            statusBanner: null
+        };
+
+        // Initialize element references
+        function initLiveElements() {
+            liveElements.targetDigits = document.querySelector('#stat-target .stat-value');
+            liveElements.digitsSearched = document.querySelector('#stat-searched .stat-value');
+            liveElements.patternsFound = document.querySelector('#stat-patterns .stat-value');
+            liveElements.longestRun = document.querySelector('#stat-longest .stat-value');
+            liveElements.elapsedTime = document.querySelector('#stat-elapsed .stat-value');
+            liveElements.eta = document.querySelector('#stat-eta .stat-value');
+            liveElements.resultsTableBody = document.querySelector('.results-table tbody');
+            liveElements.statusBanner = document.querySelector('.status-banner');
+        }
+
+        // Update the stats grid
+        function updateStatsGrid(data) {
+            if (liveElements.targetDigits) {
+                liveElements.targetDigits.textContent = data.target_digits_formatted || '1T';
+            }
+            if (liveElements.digitsSearched) {
+                liveElements.digitsSearched.textContent = data.current_position_formatted || '0';
+            }
+            if (liveElements.patternsFound) {
+                liveElements.patternsFound.textContent = data.patterns_found || '0';
+            }
+            if (liveElements.longestRun) {
+                liveElements.longestRun.textContent = data.longest_run_found || '0';
+            }
+            if (liveElements.elapsedTime) {
+                liveElements.elapsedTime.textContent = data.elapsed_formatted || '--';
+            }
+            if (liveElements.eta) {
+                liveElements.eta.textContent = data.eta_formatted || '--';
+            }
+        }
+
+        // Generate results table HTML
+        function generateResultsTable(data) {
+            if (!liveElements.resultsTableBody) return;
+
+            const results = data.results || [];
+            const longestFound = data.longest_run_found || 0;
+            const maxRunSearching = data.max_run_searching || 100;
+
+            let html = '';
+
+            // Add found results
+            for (const result of results) {
+                html += `
+                    <tr>
+                        <td>${result.run_length}</td>
+                        <td class="run-sequence">${result.sequence}</td>
+                        <td class="position">${result.position_formatted}</td>
+                        <td><span class="found-badge">FOUND</span></td>
+                    </tr>
+                `;
+            }
+
+            // Add "searching" row for next unfound
+            const nextToFind = longestFound + 1;
+            if (nextToFind <= maxRunSearching) {
+                html += `
+                    <tr>
+                        <td>${nextToFind}</td>
+                        <td class="run-sequence">${'?'.repeat(Math.min(nextToFind, 10))}</td>
+                        <td class="position">Searching...</td>
+                        <td><span class="searching-badge">SEARCHING</span></td>
+                    </tr>
+                `;
+
+                // Add pending row if there are more
+                if (nextToFind + 1 <= maxRunSearching) {
+                    html += `
+                        <tr>
+                            <td>${nextToFind + 1}-${maxRunSearching}</td>
+                            <td class="run-sequence">...</td>
+                            <td class="position">Pending...</td>
+                            <td><span class="searching-badge">PENDING</span></td>
+                        </tr>
+                    `;
+                }
+            }
+
+            liveElements.resultsTableBody.innerHTML = html;
+        }
+
+        // Update status banner
+        function updateStatusBanner(data) {
+            if (!liveElements.statusBanner) return;
+
+            const svgIcon = `<svg viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 6v6l4 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>`;
+
+            if (data.running) {
+                const percent = data.percent_complete ? data.percent_complete.toFixed(2) : '0.00';
+                const elapsed = data.elapsed_formatted || 'Starting...';
+                const eta = data.eta_formatted || 'Calculating...';
+                const rate = data.rate_formatted || '0/s';
+
+                liveElements.statusBanner.innerHTML = `
+                    ${svgIcon}
+                    <span>SEARCHING ${data.target_digits_formatted || '1T'} DIGITS | ${percent}% | ${elapsed} elapsed | ETA: ${eta} | ${rate}</span>
+                `;
+                liveElements.statusBanner.style.background = 'linear-gradient(135deg, #39ff14, #00ff41)';
+            } else {
+                liveElements.statusBanner.innerHTML = `
+                    ${svgIcon}
+                    <span>SEARCH PAUSED | ${data.current_position_formatted || '0'} digits processed</span>
+                `;
+                liveElements.statusBanner.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
+            }
+        }
+
+        // Fetch and update live data
+        async function fetchLiveData() {
+            try {
+                const response = await fetch(LIVE_DATA_URL + '?t=' + Date.now());
+                if (!response.ok) {
+                    console.log('Live data not available yet');
+                    return;
+                }
+                const data = await response.json();
+
+                updateStatsGrid(data);
+                generateResultsTable(data);
+                updateStatusBanner(data);
+
+                console.log('Live data updated:', data.timestamp);
+            } catch (error) {
+                console.log('Waiting for live data...', error.message);
+            }
+        }
+
+        // Start live updates
+        function startLiveUpdates() {
+            initLiveElements();
+            fetchLiveData(); // Initial fetch
+            setInterval(fetchLiveData, UPDATE_INTERVAL);
+        }
+
+        // Start when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startLiveUpdates);
+        } else {
+            startLiveUpdates();
+        }
+
+        // =====================================================================
+        // INTERACTIVE TERMINAL - GOLDEN RATIO FINDER v2.0 (STREAMING)
+        // =====================================================================
+
+        // Known correct values for verification
+        const KNOWN_RUNS = {
+            2: { seq: '33', pos: 7 },
+            3: { seq: '222', pos: 131 },
+            4: { seq: '4444', pos: 1218 },
+            5: { seq: '99999', pos: 6401 },
+            6: { seq: '555555', pos: 99790 },
+            7: { seq: '5555555', pos: 771952 },
+            8: { seq: '55555555', pos: 771952 }
+        };
+
+        // Streaming state
+        const streamState = {
+            isRunning: false,
+            isPaused: false,   // True when stopped but can resume
+            shouldStop: false,
+            phi: null,
+            results: {},
+            longestRun: 0,
+            startTime: 0,
+            pausedTime: 0,     // Time spent before pause (for accurate elapsed time)
+            digitCount: 0,     // Position counter for verification (includes "1" at pos 1)
+            displayCount: 0,   // Decimal digit counter for display (excludes "1" and ".")
+            runChar: null,
+            runLen: 0,
+            animationId: null,
+            verified: false,
+            // Configurable options
+            minRun: 2,         // Minimum run length to find
+            maxRun: 9,         // Maximum run length to find
+            totalDigits: 10000, // Number of digits to stream
+            // Resume state
+            savedCharIdx: 0,
+            savedPosition: 0,
+            savedRemaining: null,
+            savedRunPositions: null
+        };
+
+        // BigInt square root using Newton's method
+        function bigIntSqrt(n, precision) {
+            const scale = 10n ** BigInt(precision);
+            let x = n * scale * scale;
+            let y = (x + 1n) / 2n;
+            while (y < x) {
+                x = y;
+                y = (x + (n * scale * scale) / x) / 2n;
+            }
+            return x / scale;
+        }
+
+        // Calculate phi = (1 + sqrt(5)) / 2 with proper formatting
+        function calculatePhi(digits) {
+            const precision = digits + 100;
+            const scale = 10n ** BigInt(precision);
+
+            // Calculate sqrt(5) with high precision using Newton's method
+            // x_{n+1} = (x_n + 5*scale^2/x_n) / 2
+            let x = 2n * scale; // Initial guess: 2 * scale (representing 2.0)
+            let prevX = 0n;
+
+            // Continue until convergence (x stops changing)
+            while (x !== prevX) {
+                prevX = x;
+                x = (x + (5n * scale * scale) / x) / 2n;
+            }
+
+            // phi = (1 + sqrt5) / 2 = (scale + x) / 2
+            const phi = (scale + x) / 2n;
+
+            // Convert to string - result is phi * scale, starts with "1618..."
+            let phiStr = phi.toString();
+
+            // Format as "1.xxxxx..." - first char is '1', rest are decimals
+            const result = phiStr[0] + '.' + phiStr.slice(1, digits + 1);
+
+            return result;
+        }
+
+        // Verify our calculation against known values
+        function verifyCalculation(phiStr) {
+            // Check first few digits: 1.6180339887...
+            const expected = '1.6180339887';
+            const actual = phiStr.slice(0, expected.length);
+            if (actual !== expected) {
+                console.error('Phi verification FAILED!');
+                console.log('Expected:', expected);
+                console.log('Got:', actual);
+                return false;
+            }
+            console.log('Phi verification PASSED:', actual);
+            return true;
+        }
+
+        // Play discovery sound when a pattern is found
+        // Higher pitch for longer runs, short burst
+        function playDiscoverySound(runLen) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                // Base frequency 800Hz, +200Hz per run length for higher pitch
+                const baseFreq = 800 + (runLen - 2) * 200;
+                oscillator.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+                oscillator.type = 'square';  // Retro computer sound
+
+                // Quick attack, short decay for burst effect
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.15);
+
+                // Play a second higher beep for runs >= 5
+                if (runLen >= 5) {
+                    setTimeout(() => {
+                        const osc2 = audioCtx.createOscillator();
+                        const gain2 = audioCtx.createGain();
+                        osc2.frequency.setValueAtTime(baseFreq * 1.5, audioCtx.currentTime);
+                        osc2.type = 'square';
+                        gain2.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                        gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                        osc2.connect(gain2);
+                        gain2.connect(audioCtx.destination);
+                        osc2.start(audioCtx.currentTime);
+                        osc2.stop(audioCtx.currentTime + 0.1);
+                    }, 100);
+                }
+            } catch (e) {
+                console.log('Audio not supported:', e);
+            }
+        }
+
+        // Get color class for run length
+        // Single digits = white, patterns (runs >= 2) = neon green
+        function getColorClass(runLen) {
+            if (runLen <= 1) return 'd-white';
+            return 'd-neon';  // All patterns get bright neon green
+        }
+
+        // Update sidebar result item
+        function updateSidebarResult(runLen, seq, pos) {
+            const sidebar = document.getElementById('results-sidebar');
+            let item = sidebar.querySelector(`[data-run="${runLen}"]`);
+
+            if (!item) {
+                item = document.createElement('div');
+                item.className = 'result-item found';
+                item.setAttribute('data-run', runLen);
+
+                // Insert in order
+                const items = sidebar.querySelectorAll('.result-item');
+                let inserted = false;
+                for (const existing of items) {
+                    const existingRun = parseInt(existing.getAttribute('data-run') || '999');
+                    if (runLen < existingRun) {
+                        sidebar.insertBefore(item, existing);
+                        inserted = true;
+                        break;
+                    }
+                }
+                if (!inserted) sidebar.appendChild(item);
+            }
+
+            item.className = 'result-item found';
+            item.innerHTML = `
+                <span class="result-len">Run ${runLen}</span>
+                <span class="result-seq">${seq}</span>
+                <span class="result-pos">@ ${pos.toLocaleString()}</span>
+            `;
+
+            // Flash animation
+            item.style.animation = 'none';
+            item.offsetHeight; // Trigger reflow
+            item.style.animation = 'result-flash 0.5s ease';
+        }
+
+        // Initialize sidebar with placeholders
+        function initSidebar(minRun = 2, maxRun = 9) {
+            const sidebar = document.getElementById('results-sidebar');
+            sidebar.innerHTML = '';
+            for (let i = minRun; i <= maxRun; i++) {
+                const item = document.createElement('div');
+                item.className = 'result-item searching';
+                item.setAttribute('data-run', i);
+                item.innerHTML = `
+                    <span class="result-len">Run ${i}</span>
+                    <span class="result-seq">--</span>
+                    <span class="result-pos">searching...</span>
+                `;
+                sidebar.appendChild(item);
+            }
+        }
+
+        // Update status bar
+        function updateStatus(running, digitCount, elapsed, longestRun) {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            const countEl = document.getElementById('digit-count');
+            const timeEl = document.getElementById('elapsed-time');
+            const longestEl = document.getElementById('longest-run');
+
+            if (running) {
+                dot.classList.remove('idle');
+                text.textContent = 'Computing...';
+            } else {
+                dot.classList.add('idle');
+                text.textContent = 'Ready';
+            }
+
+            countEl.textContent = digitCount.toLocaleString();
+            timeEl.textContent = elapsed.toFixed(1) + 's';
+            longestEl.textContent = longestRun;
+        }
+
+        // Start streaming digits with configurable options
+        // Options: { digits: number, minRun: number, maxRun: number }
+        function startStreaming(options = {}) {
+            if (streamState.isRunning) {
+                console.log('Already running');
+                return;
+            }
+
+            // Parse options (support legacy call with just digits number)
+            const totalDigits = typeof options === 'number' ? options : (options.digits || 10000);
+            const minRun = options.minRun || 2;
+            const maxRun = options.maxRun || 9;
+
+            // Reset state
+            streamState.isRunning = true;
+            streamState.shouldStop = false;
+            streamState.results = {};
+            streamState.longestRun = 0;
+            streamState.digitCount = 0;
+            streamState.displayCount = 0;  // Reset display counter
+            streamState.runChar = null;
+            streamState.runLen = 0;
+            streamState.startTime = performance.now();
+            streamState.verified = false;
+            streamState.minRun = minRun;
+            streamState.maxRun = maxRun;
+            streamState.totalDigits = totalDigits;
+
+            // Update UI
+            document.getElementById('btn-stop').style.display = 'inline-flex';
+            initSidebar(minRun, maxRun);
+
+            const streamOutput = document.getElementById('digit-stream');
+            streamOutput.innerHTML = '<div class="terminal-line"><span class="term-gold">Computing phi = (1 + sqrt(5)) / 2 ...</span></div>';
+
+            // Calculate phi first (this is the slow part)
+            setTimeout(() => {
+                try {
+                    const calcStart = performance.now();
+                    streamState.phi = calculatePhi(totalDigits);
+                    const calcTime = ((performance.now() - calcStart) / 1000).toFixed(2);
+
+                    // Verify calculation
+                    const verified = verifyCalculation(streamState.phi);
+                    streamState.verified = verified;
+
+                    const verifyMsg = verified
+                        ? '<span class="term-green">VERIFIED: phi = 1.6180339887...</span>'
+                        : '<span class="term-red">WARNING: Verification failed!</span>';
+
+                    streamOutput.innerHTML = `
+                        <div class="terminal-line"><span class="term-green">Computed ${totalDigits.toLocaleString()} digits in ${calcTime}s</span></div>
+                        <div class="terminal-line">${verifyMsg}</div>
+                        <div class="terminal-line"><span class="term-gold">Finding runs ${minRun}-${maxRun} in ${totalDigits.toLocaleString()} digits...</span></div>
+                        <div class="terminal-line"><span class="term-dim">Position 1 = leading "1", position 2 = ".", position 3+ = decimals</span></div>
+                        <div class="terminal-line">&nbsp;</div>
+                        <div id="digit-display" style="line-height: 1.8; letter-spacing: 1px;"></div>
+                    `;
+
+                    // Start streaming animation
+                    streamDigits();
+
+                } catch (error) {
+                    streamOutput.innerHTML = `<div class="terminal-line"><span class="term-red">Error: ${error.message}</span></div>`;
+                    console.error(error);
+                    streamState.isRunning = false;
+                    document.getElementById('btn-stop').style.display = 'none';
+                }
+            }, 50);
+        }
+
+        // Stream digits with animation - one digit at a time with proper position tracking
+        // Position counting matches Python: position incremented for ALL chars including "."
+        // but "." resets run state without contributing to run detection
+        function streamDigits() {
+            const display = document.getElementById('digit-display');
+            const phi = streamState.phi;  // Format: "1.618033988..."
+            let charIdx = 0;  // Index into phi string
+            let position = 0;  // Position counter (1-based, ALL chars counted)
+            const batchSize = 100;  // Digits per animation frame
+
+            // Build set of run lengths to find based on config
+            const remaining = new Set();
+            for (let i = streamState.minRun; i <= streamState.maxRun; i++) {
+                remaining.add(i);
+            }
+
+            // Pre-scan to find ONLY the FIRST occurrence of each run length (2-9)
+            // Uses look-ahead (up to 9 chars) to detect run length without hardcoding
+            const runPositions = new Set();  // Positions to highlight in neon green
+            const foundFirstRun = {};  // Track which run lengths we've found first occurrence of
+
+            // Build a position-to-digit map for look-ahead (skipping '.')
+            const digitPositions = [];  // Array of {pos, char} for digits only
+            let scanPos = 0;
+            for (const ch of phi) {
+                scanPos++;
+                if (ch === '.') continue;
+                if (/\d/.test(ch)) {
+                    digitPositions.push({ pos: scanPos, char: ch });
+                }
+            }
+
+            // Now scan through digits and use look-ahead to find runs
+            for (let i = 0; i < digitPositions.length; i++) {
+                const current = digitPositions[i];
+
+                // Look ahead up to 9 positions to find how long this run is
+                let runLen = 1;
+                for (let j = 1; j <= 9 && i + j < digitPositions.length; j++) {
+                    if (digitPositions[i + j].char === current.char) {
+                        runLen++;
+                    } else {
+                        break;
+                    }
+                }
+
+                // If this starts a run of length >= 2, check if it's the FIRST of this length
+                if (runLen >= 2 && runLen >= streamState.minRun && runLen <= streamState.maxRun) {
+                    // Only mark if we haven't found a run of this EXACT length yet
+                    if (!foundFirstRun[runLen]) {
+                        foundFirstRun[runLen] = true;
+                        // Mark all positions in this run
+                        for (let k = 0; k < runLen; k++) {
+                            runPositions.add(digitPositions[i + k].pos);
+                        }
+                        console.log('First run of ' + runLen + ': "' + current.char.repeat(runLen) + '" at position ' + current.pos);
+                    }
+                }
+
+                // Skip past this run to avoid re-processing
+                if (runLen >= 2) {
+                    i += runLen - 1;
+                }
+            }
+
+            console.log('Highlight positions:', Array.from(runPositions).sort((a,b) => a-b).join(', '));
+            console.log('DEBUG: Only FIRST occurrence of each run length will be NEON GREEN');
+
+            function renderBatch() {
+                if (streamState.shouldStop || charIdx >= phi.length) {
+                    // Save state for potential resume
+                    streamState.savedCharIdx = charIdx;
+                    streamState.savedPosition = position;
+                    streamState.savedRemaining = remaining;
+                    streamState.savedRunPositions = runPositions;
+
+                    if (charIdx >= phi.length) {
+                        // Actually finished - not just paused
+                        streamState.isPaused = false;
+                        verifyResults();
+                        finishStreaming();
+                    }
+                    return;
+                }
+
+                let html = '';
+                let digitsRendered = 0;
+
+                while (charIdx < phi.length && digitsRendered < batchSize) {
+                    const ch = phi[charIdx];
+                    charIdx++;
+
+                    // Increment position for EVERY character (matching Python behavior for run detection)
+                    position++;
+
+                    // Handle decimal point - counted in position but resets run state
+                    if (ch === '.') {
+                        html += `<span class="d-gold">.</span>`;
+                        streamState.runChar = null;
+                        streamState.runLen = 0;
+                        continue;
+                    }
+
+                    // Skip non-digits
+                    if (!/\d/.test(ch)) continue;
+
+                    // Track position for verification (includes "1" at position 1)
+                    streamState.digitCount = position;
+
+                    // Count decimal digits only for display (position 3+ = after "1.")
+                    if (position > 2) {
+                        streamState.displayCount++;
+                    }
+                    digitsRendered++;
+
+                    // Track runs for pattern detection
+                    if (ch === streamState.runChar) {
+                        streamState.runLen++;
+                    } else {
+                        streamState.runChar = ch;
+                        streamState.runLen = 1;
+                    }
+
+                    // Check for new pattern to record
+                    if (remaining.has(streamState.runLen)) {
+                        const runStartPos = position - streamState.runLen + 1;
+                        const seq = ch.repeat(streamState.runLen);
+                        streamState.results[streamState.runLen] = { seq, pos: runStartPos };
+                        streamState.longestRun = Math.max(streamState.longestRun, streamState.runLen);
+                        remaining.delete(streamState.runLen);
+                        updateSidebarResult(streamState.runLen, seq, runStartPos);
+                        console.log(`Found run of ${streamState.runLen}: "${seq}" at position ${runStartPos}`);
+
+                        // Play discovery sound - higher pitch for longer runs
+                        playDiscoverySound(streamState.runLen);
+                    }
+
+                    // Color digit: gold for leading "1", neon for runs, white for singles
+                    if (position === 1) {
+                        html += `<span class="d-gold">${ch}</span>`;
+                    } else if (runPositions.has(position)) {
+                        // This position is part of a run - use neon green
+                        html += `<span class="d-neon">${ch}</span>`;
+                    } else {
+                        // Single digit - use white
+                        html += `<span class="d-white">${ch}</span>`;
+                    }
+                }
+
+                // Append to display
+                if (html) {
+                    display.innerHTML += html;
+                }
+
+                // Auto-scroll
+                const stream = document.getElementById('digit-stream');
+                stream.scrollTop = stream.scrollHeight;
+
+                // Update status - use displayCount for display (actual decimal digits only)
+                const elapsed = streamState.pausedTime + (performance.now() - streamState.startTime) / 1000;
+                updateStatus(true, streamState.displayCount, elapsed, streamState.longestRun);
+
+                // Continue
+                streamState.animationId = requestAnimationFrame(renderBatch);
+            }
+
+            renderBatch();
+        }
+
+        // Verify results against known values
+        function verifyResults() {
+            console.log('=== VERIFICATION ===');
+            let allMatch = true;
+
+            for (const [runLen, known] of Object.entries(KNOWN_RUNS)) {
+                const found = streamState.results[runLen];
+                if (found) {
+                    const seqMatch = found.seq === known.seq;
+                    const posMatch = found.pos === known.pos;
+
+                    if (seqMatch && posMatch) {
+                        console.log(`Run ${runLen}: PASS - "${found.seq}" @ ${found.pos}`);
+                    } else {
+                        console.log(`Run ${runLen}: FAIL - Expected "${known.seq}" @ ${known.pos}, Got "${found.seq}" @ ${found.pos}`);
+                        allMatch = false;
+                    }
+                } else if (streamState.digitCount >= known.pos + parseInt(runLen)) {
+                    console.log(`Run ${runLen}: MISSING - Should have found "${known.seq}" @ ${known.pos}`);
+                    allMatch = false;
+                }
+            }
+
+            if (allMatch && Object.keys(streamState.results).length > 0) {
+                console.log('All found patterns match known values!');
+            }
+        }
+
+        // Stop streaming (pause - can resume)
+        function stopStreaming() {
+            if (!streamState.isRunning) return;
+
+            streamState.shouldStop = true;
+            streamState.isPaused = true;
+            streamState.pausedTime += (performance.now() - streamState.startTime) / 1000;
+
+            if (streamState.animationId) {
+                cancelAnimationFrame(streamState.animationId);
+                streamState.animationId = null;
+            }
+
+            streamState.isRunning = false;
+            document.getElementById('btn-stop').style.display = 'none';
+
+            // Update status to show paused state
+            updateStatus(false, streamState.displayCount, streamState.pausedTime, streamState.longestRun);
+
+            // Show paused message
+            const display = document.getElementById('digit-display');
+            if (display) {
+                display.innerHTML += `<div class="terminal-line" style="margin-top: 10px;"><span class="term-yellow">⏸ PAUSED at ${streamState.displayCount.toLocaleString()} digits. Type 'resume' to continue.</span></div>`;
+            }
+        }
+
+        // Resume streaming from where we left off
+        function resumeStreaming() {
+            if (!streamState.isPaused || !streamState.phi) {
+                const display = document.getElementById('digit-stream');
+                display.innerHTML += `<div class="terminal-line"><span class="term-red">Nothing to resume. Start a new stream first.</span></div>`;
+                return;
+            }
+
+            streamState.isRunning = true;
+            streamState.isPaused = false;
+            streamState.shouldStop = false;
+            streamState.startTime = performance.now();
+
+            document.getElementById('btn-stop').style.display = 'inline-flex';
+
+            const display = document.getElementById('digit-display');
+            if (display) {
+                display.innerHTML += `<div class="terminal-line"><span class="term-green">▶ RESUMING from ${streamState.displayCount.toLocaleString()} digits...</span></div>`;
+            }
+
+            // Continue the stream using saved state
+            continueStreamDigits();
+        }
+
+        // Continue streaming from saved position
+        function continueStreamDigits() {
+            const display = document.getElementById('digit-display');
+            const phi = streamState.phi;
+            let charIdx = streamState.savedCharIdx;
+            let position = streamState.savedPosition;
+            const batchSize = 100;
+            const remaining = streamState.savedRemaining;
+            const runPositions = streamState.savedRunPositions;
+
+            function renderBatch() {
+                if (streamState.shouldStop || charIdx >= phi.length) {
+                    // Save state before stopping
+                    streamState.savedCharIdx = charIdx;
+                    streamState.savedPosition = position;
+
+                    if (charIdx >= phi.length) {
+                        // Actually finished
+                        streamState.isPaused = false;
+                        verifyResults();
+                        finishStreaming();
+                    }
+                    return;
+                }
+
+                let html = '';
+                let digitsRendered = 0;
+
+                while (charIdx < phi.length && digitsRendered < batchSize) {
+                    const ch = phi[charIdx];
+                    charIdx++;
+                    position++;
+
+                    if (ch === '.') {
+                        html += `<span class="d-gold">.</span>`;
+                        streamState.runChar = null;
+                        streamState.runLen = 0;
+                        continue;
+                    }
+
+                    if (!/\d/.test(ch)) continue;
+
+                    streamState.digitCount = position;
+                    if (position > 2) {
+                        streamState.displayCount++;
+                    }
+                    digitsRendered++;
+
+                    if (ch === streamState.runChar) {
+                        streamState.runLen++;
+                    } else {
+                        streamState.runChar = ch;
+                        streamState.runLen = 1;
+                    }
+
+                    if (remaining.has(streamState.runLen)) {
+                        const runStartPos = position - streamState.runLen + 1;
+                        const seq = ch.repeat(streamState.runLen);
+                        streamState.results[streamState.runLen] = { seq, pos: runStartPos };
+                        streamState.longestRun = Math.max(streamState.longestRun, streamState.runLen);
+                        remaining.delete(streamState.runLen);
+                        updateSidebarResult(streamState.runLen, seq, runStartPos);
+                        console.log(`Found run of ${streamState.runLen}: "${seq}" at position ${runStartPos}`);
+                        playDiscoverySound(streamState.runLen);
+                    }
+
+                    if (position === 1) {
+                        html += `<span class="d-gold">${ch}</span>`;
+                    } else if (runPositions.has(position)) {
+                        html += `<span class="d-neon">${ch}</span>`;
+                    } else {
+                        html += `<span class="d-white">${ch}</span>`;
+                    }
+                }
+
+                // Save current position for potential pause
+                streamState.savedCharIdx = charIdx;
+                streamState.savedPosition = position;
+
+                if (html) {
+                    display.innerHTML += html;
+                }
+
+                const stream = document.getElementById('digit-stream');
+                stream.scrollTop = stream.scrollHeight;
+
+                const elapsed = streamState.pausedTime + (performance.now() - streamState.startTime) / 1000;
+                updateStatus(true, streamState.displayCount, elapsed, streamState.longestRun);
+
+                streamState.animationId = requestAnimationFrame(renderBatch);
+            }
+
+            renderBatch();
+        }
+
+        // Finish streaming
+        function finishStreaming() {
+            streamState.isRunning = false;
+            document.getElementById('btn-stop').style.display = 'none';
+
+            const elapsed = (performance.now() - streamState.startTime) / 1000;
+            updateStatus(false, streamState.displayCount, elapsed, streamState.longestRun);
+
+            // Add completion message with verification
+            const display = document.getElementById('digit-display');
+            if (display) {
+                display.innerHTML += `<div class="terminal-line" style="margin-top: 15px;"><span class="term-gold">Stream complete! ${streamState.displayCount.toLocaleString()} decimal digits processed.</span></div>`;
+                display.innerHTML += `<div class="terminal-line"><span class="term-dim">Found ${Object.keys(streamState.results).length} patterns. Longest run: ${streamState.longestRun}</span></div>`;
+
+                // Show verification results
+                let verifyHtml = '<div class="terminal-line" style="margin-top: 10px;"><span class="term-cyan">Verification against known values:</span></div>';
+                for (const [runLen, known] of Object.entries(KNOWN_RUNS)) {
+                    const found = streamState.results[runLen];
+                    if (found) {
+                        const match = found.seq === known.seq && found.pos === known.pos;
+                        const status = match
+                            ? '<span class="term-green">PASS</span>'
+                            : '<span class="term-red">FAIL</span>';
+                        verifyHtml += `<div class="terminal-line">  Run ${runLen}: ${status} - "${found.seq}" @ ${found.pos.toLocaleString()} (expected @ ${known.pos.toLocaleString()})</div>`;
+                    } else if (streamState.digitCount >= known.pos) {
+                        verifyHtml += `<div class="terminal-line">  Run ${runLen}: <span class="term-yellow">NOT FOUND</span> (expected "${known.seq}" @ ${known.pos.toLocaleString()})</div>`;
+                    }
+                }
+                display.innerHTML += verifyHtml;
+            }
+        }
+
+        // Clear terminal
+        function clearTerminal() {
+            stopStreaming();
+            const streamOutput = document.getElementById('digit-stream');
+            streamOutput.innerHTML = `
+                <div class="terminal-line boot-line" style="white-space: pre; font-size: 11px;">
+<span class="term-cyan">    _____ _     _   ______ _           _           </span>
+<span class="term-cyan">   |  __ \\ |   (_) |  ____(_)         | |          </span>
+<span class="term-cyan">   | |__) | |__  _  | |__   _ _ __   __| | ___ _ __ </span>
+<span class="term-cyan">   |  ___/| '_ \\| | |  __| | | '_ \\ / _\` |/ _ \\ '__|</span>
+<span class="term-cyan">   | |    | | | | | | |    | | | | | (_| |  __/ |   </span>
+<span class="term-cyan">   |_|    |_| |_|_| |_|    |_|_| |_|\\__,_|\\___|_|   </span>
+                </div>
+                <div class="terminal-line"><span class="term-gold">Golden Ratio Pattern Finder v2.4 - Sound Effects</span></div>
+                <div class="terminal-line">&nbsp;</div>
+                <div class="terminal-line"><span class="term-white">Commands:</span></div>
+                <div class="terminal-line">  <span class="term-green">find 2-5</span>        <span class="term-white">Find runs 2-5 in 10,000 digits</span></div>
+                <div class="terminal-line">  <span class="term-green">find 2-9 50000</span>  <span class="term-white">Find runs 2-9 in 50,000 digits</span></div>
+                <div class="terminal-line">  <span class="term-green">stream 10000</span>    <span class="term-white">Stream 10,000 digits (default)</span></div>
+                <div class="terminal-line">  <span class="term-green">help</span>            <span class="term-white">Show all commands</span></div>
+                <div class="terminal-line">&nbsp;</div>
+            `;
+            initSidebar();
+            updateStatus(false, 0, 0, 0);
+        }
+
+        // Toggle terminal size
+        function toggleTerminalSize(mode) {
+            const terminal = document.getElementById('mac-terminal');
+            const overlay = document.getElementById('terminal-overlay');
+
+            switch (mode) {
+                case 'minimize':
+                    terminal.classList.remove('expanded');
+                    overlay.classList.remove('visible');
+                    break;
+                case 'maximize':
+                case 'expand':
+                case 'fullscreen':
+                    terminal.classList.toggle('expanded');
+                    overlay.classList.toggle('visible');
+                    break;
+            }
+        }
+
+        // Close fullscreen on overlay click
+        document.getElementById('terminal-overlay')?.addEventListener('click', () => {
+            toggleTerminalSize('minimize');
+        });
+
+        // Close fullscreen on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                toggleTerminalSize('minimize');
+            }
+        });
+
+        // Handle terminal input
+        function initTerminal() {
+            const input = document.getElementById('terminal-input');
+            if (!input) return;
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const cmd = input.value.trim();
+                    const cmdLower = cmd.toLowerCase();
+
+                    // Parse "find X-Y [digits]" command
+                    // Examples: "find 2-5", "find 2-9 50000", "find 3-7 100000"
+                    const findMatch = cmdLower.match(/^find\s+(\d+)-(\d+)(?:\s+(\d+))?$/);
+
+                    if (findMatch) {
+                        const minRun = parseInt(findMatch[1]);
+                        const maxRun = parseInt(findMatch[2]);
+                        const digits = parseInt(findMatch[3]) || 10000;
+
+                        if (minRun < 2 || maxRun > 15 || minRun > maxRun) {
+                            const display = document.getElementById('digit-stream');
+                            display.innerHTML += `<div class="terminal-line"><span class="term-red">Error: Run range must be 2-15, min <= max</span></div>`;
+                        } else {
+                            startStreaming({ digits, minRun, maxRun });
+                        }
+                    } else if (cmdLower.startsWith('stream') || cmdLower.startsWith('run')) {
+                        const parts = cmdLower.split(/\s+/);
+                        const digits = parseInt(parts[1]) || 10000;
+                        startStreaming({ digits, minRun: 2, maxRun: 9 });
+                    } else if (cmdLower === 'stop') {
+                        stopStreaming();
+                    } else if (cmdLower === 'resume') {
+                        resumeStreaming();
+                    } else if (cmdLower === 'clear') {
+                        clearTerminal();
+                    } else if (cmdLower === 'help') {
+                        const display = document.getElementById('digit-stream');
+                        display.innerHTML += `
+                            <div class="terminal-line"><span class="term-gold">═══ Commands ═══</span></div>
+                            <div class="terminal-line">&nbsp;</div>
+                            <div class="terminal-line"><span class="term-cyan">find X-Y [digits]</span></div>
+                            <div class="terminal-line">  Find runs of length X to Y in [digits] digits</div>
+                            <div class="terminal-line">  <span class="term-dim">Examples:</span></div>
+                            <div class="terminal-line">    <span class="term-green">find 2-5</span>        <span class="term-dim">Find runs 2-5 in 10000 digits</span></div>
+                            <div class="terminal-line">    <span class="term-green">find 2-9 50000</span>  <span class="term-dim">Find runs 2-9 in 50000 digits</span></div>
+                            <div class="terminal-line">    <span class="term-green">find 3-7 100000</span> <span class="term-dim">Find runs 3-7 in 100000 digits</span></div>
+                            <div class="terminal-line">&nbsp;</div>
+                            <div class="terminal-line"><span class="term-cyan">stream [digits]</span> - Stream digits (default: 10000, finds runs 2-9)</div>
+                            <div class="terminal-line"><span class="term-cyan">stop</span> - Stop/pause streaming</div>
+                            <div class="terminal-line"><span class="term-cyan">resume</span> - Resume paused stream</div>
+                            <div class="terminal-line"><span class="term-cyan">clear</span> - Clear terminal</div>
+                            <div class="terminal-line"><span class="term-cyan">help</span> - Show this help</div>
+                            <div class="terminal-line">&nbsp;</div>
+                        `;
+                    } else if (cmd.length > 0) {
+                        const display = document.getElementById('digit-stream');
+                        display.innerHTML += `<div class="terminal-line"><span class="term-red">Unknown command: ${cmd}</span></div>`;
+                        display.innerHTML += `<div class="terminal-line"><span class="term-dim">Type 'help' for available commands</span></div>`;
+                    }
+                    input.value = '';
+                }
+            });
+
+            // Focus on click
+            document.querySelector('.mac-terminal')?.addEventListener('click', () => {
+                input.focus();
+            });
+        }
+
+        // Copy code to clipboard
+        function copyCode() {
+            const codeEl = document.getElementById('js-source-code');
+            const btn = document.getElementById('copy-btn');
+            const btnText = document.getElementById('copy-text');
+
+            // Extract text without HTML
+            const code = codeEl.innerText;
+
+            navigator.clipboard.writeText(code).then(() => {
+                btn.classList.add('copied');
+                btnText.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btnText.textContent = 'Copy Code';
+                }, 2000);
+            }).catch(err => {
+                console.error('Copy failed:', err);
+            });
+        }
+
+        // Resize functionality
+        function initResize() {
+            const handle = document.getElementById('resize-handle');
+            const terminal = document.getElementById('mac-terminal');
+            const split = terminal.querySelector('.terminal-split');
+
+            if (!handle || !terminal) return;
+
+            let isResizing = false;
+            let startY, startHeight;
+
+            handle.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startY = e.clientY;
+                startHeight = split.offsetHeight;
+                document.body.style.cursor = 'nwse-resize';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                const delta = e.clientY - startY;
+                const newHeight = Math.max(300, Math.min(800, startHeight + delta));
+                split.style.height = newHeight + 'px';
+            });
+
+            document.addEventListener('mouseup', () => {
+                isResizing = false;
+                document.body.style.cursor = '';
+            });
+        }
+
+        // Initialize everything when ready
+        function initAll() {
+            initTerminal();
+            initSidebar();
+            initResize();
+
+            // Handle overlay click to close fullscreen
+            const overlay = document.getElementById('terminal-overlay');
+            if (overlay) {
+                overlay.addEventListener('click', () => toggleTerminalSize('minimize'));
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAll);
+        } else {
+            initAll();
+        }
+    </script>
+</body>
+</html>
