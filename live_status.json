@@ -1,31 +1,25 @@
 {
-  "timestamp": "2026-01-25 18:26:53.171",
-  "timestamp_unix": 1769383613.171042,
-  "event": "Found run 8: 55555555",
+  "timestamp": "2026-01-25 18:30:46.739",
+  "timestamp_unix": 1769383846.739907,
+  "event": "Found run 9: 333333333",
   "running": true,
   "target_digits": 1250000000000000,
   "target_digits_formatted": "1250.00T",
-  "current_position": 100000000,
-  "current_position_formatted": "100.00M",
+  "current_position": 400000000,
+  "current_position_formatted": "400.00M",
   "percent_complete": 0.0,
-  "elapsed_seconds": 35.75360894203186,
-  "elapsed_formatted": "35.754s",
-  "rate": 3111349.147593664,
-  "rate_formatted": "3.11M/s",
-  "patterns_found": 7,
+  "elapsed_seconds": 269.32247400283813,
+  "elapsed_formatted": "4m 29.3s",
+  "rate": 1485209.291463724,
+  "rate_formatted": "1.49M/s",
+  "patterns_found": 8,
   "max_run_searching": 100,
-  "longest_run_found": 8,
-  "next_pattern_estimate": {
-    "next_run_length": 9,
-    "expected_position": 314529196,
-    "digits_remaining": 214529196,
-    "eta_seconds": 68.95053747533225,
-    "eta_formatted": "1m 9.0s"
-  },
+  "longest_run_found": 9,
+  "next_pattern_estimate": null,
   "eta_completion": {
-    "digits_remaining": 1249999900000000,
-    "eta_seconds": 401754943.17851067,
-    "eta_formatted": "4649.94 days"
+    "digits_remaining": 1249999600000000,
+    "eta_seconds": 841631955.2970767,
+    "eta_formatted": "9741.11 days"
   },
   "results": [
     {
@@ -111,6 +105,18 @@
       "elapsed_total_formatted": "35.754s",
       "elapsed_since_last_seconds": 0.6064472198486328,
       "elapsed_since_last_formatted": "606ms"
+    },
+    {
+      "run_length": 9,
+      "sequence": "333333333",
+      "position": 314529196,
+      "position_formatted": "314,529,196",
+      "found_at_timestamp": "2026-01-25 18:30:46.739",
+      "found_at_unix": 1769383846.7397592,
+      "elapsed_total_seconds": 269.3223261833191,
+      "elapsed_total_formatted": "4m 29.3s",
+      "elapsed_since_last_seconds": 233.56881308555603,
+      "elapsed_since_last_formatted": "3m 53.6s"
     }
   ],
   "start_time": "2026-01-25 18:26:17.417",
