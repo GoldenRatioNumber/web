@@ -1,31 +1,25 @@
 {
-  "timestamp": "2026-01-25 18:17:52.593",
-  "timestamp_unix": 1769383072.5938098,
-  "event": "Found run 8: 55555555",
+  "timestamp": "2026-01-25 18:21:47.209",
+  "timestamp_unix": 1769383307.209016,
+  "event": "Found run 9: 333333333",
   "running": true,
   "target_digits": 1250000000,
   "target_digits_formatted": "1.25B",
-  "current_position": 100000000,
-  "current_position_formatted": "100.00M",
-  "percent_complete": 8.0,
-  "elapsed_seconds": 36.00908279418945,
-  "elapsed_formatted": "36.009s",
-  "rate": 3064601.9566043336,
-  "rate_formatted": "3.06M/s",
-  "patterns_found": 7,
+  "current_position": 400000000,
+  "current_position_formatted": "400.00M",
+  "percent_complete": 32.0,
+  "elapsed_seconds": 270.6242890357971,
+  "elapsed_formatted": "4m 30.6s",
+  "rate": 1478064.4592218662,
+  "rate_formatted": "1.48M/s",
+  "patterns_found": 8,
   "max_run_searching": 100,
-  "longest_run_found": 8,
-  "next_pattern_estimate": {
-    "next_run_length": 9,
-    "expected_position": 314529196,
-    "digits_remaining": 214529196,
-    "eta_seconds": 70.00230341094752,
-    "eta_formatted": "1m 10.0s"
-  },
+  "longest_run_found": 9,
+  "next_pattern_estimate": null,
   "eta_completion": {
-    "digits_remaining": 1150000000,
-    "eta_seconds": 375.25264823436737,
-    "eta_formatted": "6m 15.3s"
+    "digits_remaining": 850000000,
+    "eta_seconds": 575.0764079988003,
+    "eta_formatted": "9m 35.1s"
   },
   "results": [
     {
@@ -111,6 +105,18 @@
       "elapsed_total_formatted": "36.009s",
       "elapsed_since_last_seconds": 0.6110279560089111,
       "elapsed_since_last_formatted": "611ms"
+    },
+    {
+      "run_length": 9,
+      "sequence": "333333333",
+      "position": 314529196,
+      "position_formatted": "314,529,196",
+      "found_at_timestamp": "2026-01-25 18:21:47.208",
+      "found_at_unix": 1769383307.208944,
+      "elapsed_total_seconds": 270.62421703338623,
+      "elapsed_total_formatted": "4m 30.6s",
+      "elapsed_since_last_seconds": 234.61520504951477,
+      "elapsed_since_last_formatted": "3m 54.6s"
     }
   ],
   "start_time": "2026-01-25 18:17:16.584",
