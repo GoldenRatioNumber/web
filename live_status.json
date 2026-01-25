@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-01-25T17:42:08.316006",
+  "running": true,
+  "target_digits": 1000000000000,
+  "target_digits_formatted": "1.00T",
+  "current_position": 800000000,
+  "current_position_formatted": "800.00M",
+  "percent_complete": 0.08,
+  "elapsed_seconds": 1118.1284680366516,
+  "elapsed_formatted": "18.6 minutes",
+  "rate": 797179.1901223607,
+  "rate_formatted": "797.18K/s",
+  "eta_seconds": 1253419.5728900433,
+  "eta_formatted": "14.5 days",
+  "patterns_found": 8,
+  "max_run_searching": 100,
+  "longest_run_found": 9,
+  "results": [
+    {
+      "run_length": 2,
+      "sequence": "33",
+      "position": 7,
+      "position_formatted": "7"
+    },
+    {
+      "run_length": 3,
+      "sequence": "222",
+      "position": 131,
+      "position_formatted": "131"
+    },
+    {
+      "run_length": 4,
+      "sequence": "4444",
+      "position": 1218,
+      "position_formatted": "1,218"
+    },
+    {
+      "run_length": 5,
+      "sequence": "99999",
+      "position": 6401,
+      "position_formatted": "6,401"
+    },
+    {
+      "run_length": 6,
+      "sequence": "555555",
+      "position": 99790,
+      "position_formatted": "99,790"
+    },
+    {
+      "run_length": 7,
+      "sequence": "5555555",
+      "position": 771952,
+      "position_formatted": "771,952"
+    },
+    {
+      "run_length": 8,
+      "sequence": "55555555",
+      "position": 771952,
+      "position_formatted": "771,952"
+    },
+    {
+      "run_length": 9,
+      "sequence": "333333333",
+      "position": 314529196,
+      "position_formatted": "314,529,196"
+    }
+  ],
+  "start_time": "2026-01-25T17:23:30.187521"
+}
