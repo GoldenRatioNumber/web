@@ -213,14 +213,15 @@ class LiveStatusUpdater:
         now = time.time()
         elapsed = now - self.start_time
 
-        # Estimate time to next pattern based on known positions
+        # Known pattern positions for estimation
+        known_positions = {
+            2: 7, 3: 131, 4: 1218, 5: 6401, 6: 99790,
+            7: 771952, 8: 771952, 9: 314529196, 10: None
+        }
+
+        # Estimate time to next pattern
         next_pattern_estimate = None
-        if self.results and self.rate > 0:
-            # Known pattern positions for estimation
-            known_positions = {
-                2: 7, 3: 131, 4: 1218, 5: 6401, 6: 99790,
-                7: 771952, 8: 771952, 9: 314529196, 10: None
-            }
+        if self.rate > 0:
             next_run = len(self.results) + 2  # +2 because we start at run length 2
             if next_run in known_positions and known_positions[next_run]:
                 remaining = known_positions[next_run] - self.current_position
@@ -233,6 +234,17 @@ class LiveStatusUpdater:
                         "eta_seconds": eta_seconds,
                         "eta_formatted": self._format_elapsed(eta_seconds)
                     }
+
+        # ETA to complete all target digits
+        eta_completion = None
+        if self.rate > 0 and self.current_position < self.max_digits:
+            remaining_digits = self.max_digits - self.current_position
+            eta_seconds = remaining_digits / self.rate
+            eta_completion = {
+                "digits_remaining": remaining_digits,
+                "eta_seconds": eta_seconds,
+                "eta_formatted": self._format_elapsed(eta_seconds)
+            }
 
         status = {
             "timestamp": self._format_timestamp(now),
@@ -252,6 +264,7 @@ class LiveStatusUpdater:
             "max_run_searching": self.max_run,
             "longest_run_found": self.results[-1]["run_length"] if self.results else 0,
             "next_pattern_estimate": next_pattern_estimate,
+            "eta_completion": eta_completion,
             "results": self.results,
             "start_time": self._format_timestamp(self.start_time),
             "start_time_unix": self.start_time

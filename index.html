@@ -1706,6 +1706,12 @@ KNOWN_PATTERNS = {
                 liveElements.longestRun.textContent = data.longest_run_found || '0';
             }
             if (liveElements.eta) {
+                const etaCompletion = data.eta_completion;
+                liveElements.eta.textContent = etaCompletion && etaCompletion.eta_formatted
+                    ? etaCompletion.eta_formatted
+                    : '--';
+            }
+            if (liveElements.eta) {
                 liveElements.eta.textContent = data.eta_formatted || '--';
             }
         }
