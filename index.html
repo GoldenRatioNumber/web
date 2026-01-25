@@ -1614,10 +1614,15 @@ KNOWN_PATTERNS = {
         });
 
         // =====================================================================
-        // LIVE DATA UPDATES
+        // LIVE DATA UPDATES - Dynamic Timer Based on JSON Timestamps
         // =====================================================================
         const LIVE_DATA_URL = 'live_status.json';
-        const UPDATE_INTERVAL = 5000; // 5 seconds
+        const CHECK_INTERVAL = 10000; // Check for new patterns every 10 seconds
+
+        // Store state
+        let liveData = null;
+        let lastPatternCount = 0;
+        let timerInterval = null;
 
         // Store elements for updates
         const liveElements = {
@@ -1631,6 +1636,26 @@ KNOWN_PATTERNS = {
             statusBanner: null
         };
 
+        // Format elapsed time with milliseconds
+        function formatElapsed(ms) {
+            if (ms < 1000) {
+                return `${ms.toFixed(0)}ms`;
+            } else if (ms < 60000) {
+                return `${(ms/1000).toFixed(3)}s`;
+            } else if (ms < 3600000) {
+                const mins = Math.floor(ms / 60000);
+                const secs = ((ms % 60000) / 1000).toFixed(1);
+                return `${mins}m ${secs}s`;
+            } else if (ms < 86400000) {
+                const hours = Math.floor(ms / 3600000);
+                const mins = Math.floor((ms % 3600000) / 60000);
+                return `${hours}h ${mins}m`;
+            } else {
+                const days = (ms / 86400000).toFixed(2);
+                return `${days} days`;
+            }
+        }
+
         // Initialize element references
         function initLiveElements() {
             liveElements.targetDigits = document.querySelector('#stat-target .stat-value');
@@ -1643,7 +1668,30 @@ KNOWN_PATTERNS = {
             liveElements.statusBanner = document.querySelector('.status-banner');
         }
 
-        // Update the stats grid
+        // Update elapsed time display (called every 10ms for smooth milliseconds)
+        function updateElapsedTimer() {
+            if (!liveData || !liveElements.elapsedTime) return;
+
+            // Calculate elapsed from start_time_unix to now (simulated real-time)
+            const startUnix = liveData.start_time_unix * 1000; // Convert to ms
+            const lastUpdateUnix = liveData.timestamp_unix * 1000;
+
+            // If search is running, simulate time continuing from last update
+            // If search is stopped, show the elapsed time when it stopped
+            let elapsed;
+            if (liveData.running) {
+                // Simulate continuing from last pattern found
+                const timeSinceUpdate = Date.now() - lastUpdateUnix;
+                elapsed = (liveData.elapsed_seconds * 1000) + timeSinceUpdate;
+            } else {
+                // Search stopped - show final elapsed time
+                elapsed = liveData.elapsed_seconds * 1000;
+            }
+
+            liveElements.elapsedTime.textContent = formatElapsed(elapsed);
+        }
+
+        // Update the stats grid (except elapsed which updates separately)
         function updateStatsGrid(data) {
             if (liveElements.targetDigits) {
                 liveElements.targetDigits.textContent = data.target_digits_formatted || '1T';
@@ -1657,15 +1705,12 @@ KNOWN_PATTERNS = {
             if (liveElements.longestRun) {
                 liveElements.longestRun.textContent = data.longest_run_found || '0';
             }
-            if (liveElements.elapsedTime) {
-                liveElements.elapsedTime.textContent = data.elapsed_formatted || '--';
-            }
             if (liveElements.eta) {
                 liveElements.eta.textContent = data.eta_formatted || '--';
             }
         }
 
-        // Generate results table HTML
+        // Generate results table HTML with timing info
         function generateResultsTable(data) {
             if (!liveElements.resultsTableBody) return;
 
@@ -1676,16 +1721,22 @@ KNOWN_PATTERNS = {
 
             let html = '';
 
-            // Add found results with timing info
+            // Add found results with detailed timing
             for (const result of results) {
-                const timeInfo = result.elapsed_total_formatted
-                    ? `<br><small style="color:#888;">Found: ${result.found_at_timestamp || ''}<br>Total: ${result.elapsed_total_formatted} | Since last: ${result.elapsed_since_last_formatted || '--'}</small>`
-                    : '';
+                const foundTime = result.found_at_timestamp || '';
+                const totalElapsed = result.elapsed_total_formatted || '--';
+                const sinceLast = result.elapsed_since_last_formatted || '--';
+
                 html += `
                     <tr>
                         <td>${result.run_length}</td>
                         <td class="run-sequence">${result.sequence}</td>
-                        <td class="position">${result.position_formatted}${timeInfo}</td>
+                        <td class="position">${result.position_formatted}</td>
+                        <td style="font-size: 0.75em; color: #888;">
+                            <div>Found: <span style="color:#39ff14;">${foundTime}</span></div>
+                            <div>Total: <span style="color:#FFD700;">${totalElapsed}</span></div>
+                            <div>Since last: <span style="color:#00BFFF;">${sinceLast}</span></div>
+                        </td>
                         <td><span class="found-badge">FOUND</span></td>
                     </tr>
                 `;
@@ -1693,15 +1744,16 @@ KNOWN_PATTERNS = {
 
             // Add "searching" row for next unfound
             const nextToFind = longestFound + 1;
-            if (nextToFind <= maxRunSearching) {
+            if (nextToFind <= maxRunSearching && data.running) {
                 const etaInfo = nextEstimate && nextEstimate.eta_formatted
-                    ? `<br><small style="color:#39ff14;">ETA: ${nextEstimate.eta_formatted}</small>`
+                    ? `<div style="color:#39ff14; font-size:0.8em;">ETA: ${nextEstimate.eta_formatted}</div>`
                     : '';
                 html += `
                     <tr>
                         <td>${nextToFind}</td>
                         <td class="run-sequence">${'?'.repeat(Math.min(nextToFind, 10))}</td>
-                        <td class="position">Searching...${etaInfo}</td>
+                        <td class="position">Searching...</td>
+                        <td style="font-size: 0.75em;">${etaInfo}</td>
                         <td><span class="searching-badge">SEARCHING</span></td>
                     </tr>
                 `;
@@ -1713,6 +1765,7 @@ KNOWN_PATTERNS = {
                             <td>${nextToFind + 1}-${maxRunSearching}</td>
                             <td class="run-sequence">...</td>
                             <td class="position">Pending...</td>
+                            <td></td>
                             <td><span class="searching-badge">PENDING</span></td>
                         </tr>
                     `;
@@ -1722,7 +1775,7 @@ KNOWN_PATTERNS = {
             liveElements.resultsTableBody.innerHTML = html;
         }
 
-        // Update status banner
+        // Update status banner with live timer
         function updateStatusBanner(data) {
             if (!liveElements.statusBanner) return;
 
@@ -1731,30 +1784,43 @@ KNOWN_PATTERNS = {
                 <path d="M12 6v6l4 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>`;
 
+            const found = data.patterns_found || 0;
             const event = data.event || '';
-            const timestamp = data.timestamp || '';
 
             if (data.running) {
-                const percent = data.percent_complete ? data.percent_complete.toFixed(2) : '0.00';
-                const elapsed = data.elapsed_formatted || 'Starting...';
                 const rate = data.rate_formatted || '0/s';
-                const found = data.patterns_found || 0;
-
                 liveElements.statusBanner.innerHTML = `
                     ${svgIcon}
-                    <span>SEARCHING ${data.target_digits_formatted || '1T'} DIGITS | ${found} patterns found | ${elapsed} elapsed | ${rate}</span>
+                    <span>SEARCHING ${data.target_digits_formatted || '1T'} DIGITS | ${found} patterns found | <span id="banner-elapsed"></span> | ${rate}</span>
                 `;
                 liveElements.statusBanner.style.background = 'linear-gradient(135deg, #39ff14, #00ff41)';
             } else {
                 liveElements.statusBanner.innerHTML = `
                     ${svgIcon}
-                    <span>SEARCH PAUSED | ${data.patterns_found || 0} patterns found | Last: ${event}</span>
+                    <span>SEARCH COMPLETE | ${found} patterns found | Total time: <span id="banner-elapsed"></span></span>
                 `;
                 liveElements.statusBanner.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
             }
         }
 
-        // Fetch and update live data
+        // Update banner elapsed time
+        function updateBannerTimer() {
+            if (!liveData) return;
+            const bannerElapsed = document.getElementById('banner-elapsed');
+            if (!bannerElapsed) return;
+
+            let elapsed;
+            if (liveData.running) {
+                const lastUpdateUnix = liveData.timestamp_unix * 1000;
+                const timeSinceUpdate = Date.now() - lastUpdateUnix;
+                elapsed = (liveData.elapsed_seconds * 1000) + timeSinceUpdate;
+            } else {
+                elapsed = liveData.elapsed_seconds * 1000;
+            }
+            bannerElapsed.textContent = formatElapsed(elapsed);
+        }
+
+        // Fetch live data and check for new patterns
         async function fetchLiveData() {
             try {
                 const response = await fetch(LIVE_DATA_URL + '?t=' + Date.now());
@@ -1764,11 +1830,20 @@ KNOWN_PATTERNS = {
                 }
                 const data = await response.json();
 
+                // Check if new pattern was found
+                const newPatternCount = data.patterns_found || 0;
+                if (newPatternCount !== lastPatternCount) {
+                    console.log(`New pattern detected! Count: ${lastPatternCount} -> ${newPatternCount}`);
+                    lastPatternCount = newPatternCount;
+                }
+
+                // Store data and update display
+                liveData = data;
                 updateStatsGrid(data);
                 generateResultsTable(data);
                 updateStatusBanner(data);
 
-                console.log('Live data updated:', data.timestamp);
+                console.log('Live data updated:', data.timestamp, 'Patterns:', data.patterns_found);
             } catch (error) {
                 console.log('Waiting for live data...', error.message);
             }
@@ -1778,7 +1853,15 @@ KNOWN_PATTERNS = {
         function startLiveUpdates() {
             initLiveElements();
             fetchLiveData(); // Initial fetch
-            setInterval(fetchLiveData, UPDATE_INTERVAL);
+
+            // Check for new patterns periodically
+            setInterval(fetchLiveData, CHECK_INTERVAL);
+
+            // Update elapsed timer display every 10ms for smooth milliseconds
+            timerInterval = setInterval(() => {
+                updateElapsedTimer();
+                updateBannerTimer();
+            }, 10);
         }
 
         // Start when DOM is ready
