@@ -1672,16 +1672,20 @@ KNOWN_PATTERNS = {
             const results = data.results || [];
             const longestFound = data.longest_run_found || 0;
             const maxRunSearching = data.max_run_searching || 100;
+            const nextEstimate = data.next_pattern_estimate;
 
             let html = '';
 
-            // Add found results
+            // Add found results with timing info
             for (const result of results) {
+                const timeInfo = result.elapsed_total_formatted
+                    ? `<br><small style="color:#888;">Found: ${result.found_at_timestamp || ''}<br>Total: ${result.elapsed_total_formatted} | Since last: ${result.elapsed_since_last_formatted || '--'}</small>`
+                    : '';
                 html += `
                     <tr>
                         <td>${result.run_length}</td>
                         <td class="run-sequence">${result.sequence}</td>
-                        <td class="position">${result.position_formatted}</td>
+                        <td class="position">${result.position_formatted}${timeInfo}</td>
                         <td><span class="found-badge">FOUND</span></td>
                     </tr>
                 `;
@@ -1690,11 +1694,14 @@ KNOWN_PATTERNS = {
             // Add "searching" row for next unfound
             const nextToFind = longestFound + 1;
             if (nextToFind <= maxRunSearching) {
+                const etaInfo = nextEstimate && nextEstimate.eta_formatted
+                    ? `<br><small style="color:#39ff14;">ETA: ${nextEstimate.eta_formatted}</small>`
+                    : '';
                 html += `
                     <tr>
                         <td>${nextToFind}</td>
                         <td class="run-sequence">${'?'.repeat(Math.min(nextToFind, 10))}</td>
-                        <td class="position">Searching...</td>
+                        <td class="position">Searching...${etaInfo}</td>
                         <td><span class="searching-badge">SEARCHING</span></td>
                     </tr>
                 `;
@@ -1724,21 +1731,24 @@ KNOWN_PATTERNS = {
                 <path d="M12 6v6l4 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>`;
 
+            const event = data.event || '';
+            const timestamp = data.timestamp || '';
+
             if (data.running) {
                 const percent = data.percent_complete ? data.percent_complete.toFixed(2) : '0.00';
                 const elapsed = data.elapsed_formatted || 'Starting...';
-                const eta = data.eta_formatted || 'Calculating...';
                 const rate = data.rate_formatted || '0/s';
+                const found = data.patterns_found || 0;
 
                 liveElements.statusBanner.innerHTML = `
                     ${svgIcon}
-                    <span>SEARCHING ${data.target_digits_formatted || '1T'} DIGITS | ${percent}% | ${elapsed} elapsed | ETA: ${eta} | ${rate}</span>
+                    <span>SEARCHING ${data.target_digits_formatted || '1T'} DIGITS | ${found} patterns found | ${elapsed} elapsed | ${rate}</span>
                 `;
                 liveElements.statusBanner.style.background = 'linear-gradient(135deg, #39ff14, #00ff41)';
             } else {
                 liveElements.statusBanner.innerHTML = `
                     ${svgIcon}
-                    <span>SEARCH PAUSED | ${data.current_position_formatted || '0'} digits processed</span>
+                    <span>SEARCH PAUSED | ${data.patterns_found || 0} patterns found | Last: ${event}</span>
                 `;
                 liveElements.statusBanner.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
             }

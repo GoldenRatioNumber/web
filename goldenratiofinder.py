@@ -32,6 +32,7 @@ from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing as mp
 import threading
+import multiprocessing
 import http.client
 import urllib.parse
 import subprocess
@@ -132,106 +133,130 @@ def parse_number(s: str) -> int:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class LiveStatusUpdater:
-    """Updates live status file for website to display real-time progress."""
+    """Updates live status file ONLY when a pattern is found."""
 
     def __init__(self, max_digits: int, max_run: int):
         self.max_digits = max_digits
         self.max_run = max_run
         self.start_time = time.time()
+        self.results = []  # List of pattern results with timing
         self.current_position = 0
-        self.results = {}
         self.rate = 0
         self.running = False
-        self.thread = None
-        self.lock = threading.Lock()
+        self.last_pattern_time = None
+
+    def _format_elapsed(self, seconds: float) -> str:
+        """Format elapsed time with milliseconds for short durations."""
+        if seconds < 1:
+            return f"{seconds*1000:.0f}ms"
+        elif seconds < 60:
+            return f"{seconds:.3f}s"
+        elif seconds < 3600:
+            mins = int(seconds // 60)
+            secs = seconds % 60
+            return f"{mins}m {secs:.1f}s"
+        elif seconds < 86400:
+            hours = int(seconds // 3600)
+            mins = int((seconds % 3600) // 60)
+            return f"{hours}h {mins}m"
+        else:
+            days = seconds / 86400
+            return f"{days:.2f} days"
+
+    def _format_timestamp(self, ts: float) -> str:
+        """Format timestamp with milliseconds."""
+        dt = datetime.fromtimestamp(ts)
+        return dt.strftime("%Y-%m-%d %H:%M:%S.") + f"{int((ts % 1) * 1000):03d}"
+
+    def start(self):
+        """Mark search as started."""
+        self.running = True
+        self.start_time = time.time()
+        self.last_pattern_time = self.start_time
+        self._write_status("Search started")
+        print(f"Live status updates enabled: {WEBSITE_DATA_DIR}/{LIVE_DATA_FILE}")
 
     def update(self, position: int, results: dict, rate: float):
-        """Update current status (thread-safe)."""
-        with self.lock:
-            self.current_position = position
-            self.results = results.copy()
-            self.rate = rate
+        """Update current position (no file write, just tracking)."""
+        self.current_position = position
+        self.rate = rate
 
-    def _calculate_eta(self) -> dict:
-        """Calculate estimated time to completion."""
-        with self.lock:
-            elapsed = time.time() - self.start_time
-            position = self.current_position
-            rate = self.rate
+    def pattern_found(self, run_length: int, sequence: str, position: int):
+        """Called when a new pattern is found - writes to JSON and pushes to GitHub."""
+        now = time.time()
+        elapsed_total = now - self.start_time
+        elapsed_since_last = now - self.last_pattern_time if self.last_pattern_time else elapsed_total
 
-        if rate <= 0 or position <= 0:
-            return {"seconds": None, "formatted": "Calculating..."}
+        pattern_data = {
+            "run_length": run_length,
+            "sequence": sequence,
+            "position": position,
+            "position_formatted": f"{position:,}",
+            "found_at_timestamp": self._format_timestamp(now),
+            "found_at_unix": now,
+            "elapsed_total_seconds": elapsed_total,
+            "elapsed_total_formatted": self._format_elapsed(elapsed_total),
+            "elapsed_since_last_seconds": elapsed_since_last,
+            "elapsed_since_last_formatted": self._format_elapsed(elapsed_since_last)
+        }
 
-        remaining_digits = self.max_digits - position
-        eta_seconds = remaining_digits / rate
+        self.results.append(pattern_data)
+        self.last_pattern_time = now
 
-        # Format ETA
-        if eta_seconds < 60:
-            formatted = f"{eta_seconds:.0f} seconds"
-        elif eta_seconds < 3600:
-            formatted = f"{eta_seconds/60:.1f} minutes"
-        elif eta_seconds < 86400:
-            formatted = f"{eta_seconds/3600:.1f} hours"
-        else:
-            days = eta_seconds / 86400
-            if days > 365:
-                formatted = f"{days/365:.1f} years"
-            else:
-                formatted = f"{days:.1f} days"
+        self._write_status(f"Found run {run_length}: {sequence}")
 
-        return {"seconds": eta_seconds, "formatted": formatted}
+        # Auto-publish to GitHub
+        git_publish(f"Pattern found: {run_length}-digit run '{sequence}' at position {position:,}")
 
-    def _write_status(self):
+    def _write_status(self, event: str = ""):
         """Write current status to JSON file."""
-        with self.lock:
-            elapsed = time.time() - self.start_time
-            position = self.current_position
-            results = self.results.copy()
-            rate = self.rate
+        now = time.time()
+        elapsed = now - self.start_time
 
-        eta = self._calculate_eta()
-        percent = (position / self.max_digits * 100) if self.max_digits > 0 else 0
-
-        # Format elapsed time
-        if elapsed < 60:
-            elapsed_fmt = f"{elapsed:.0f} seconds"
-        elif elapsed < 3600:
-            elapsed_fmt = f"{elapsed/60:.1f} minutes"
-        elif elapsed < 86400:
-            elapsed_fmt = f"{elapsed/3600:.1f} hours"
-        else:
-            elapsed_fmt = f"{elapsed/86400:.1f} days"
+        # Estimate time to next pattern based on known positions
+        next_pattern_estimate = None
+        if self.results and self.rate > 0:
+            # Known pattern positions for estimation
+            known_positions = {
+                2: 7, 3: 131, 4: 1218, 5: 6401, 6: 99790,
+                7: 771952, 8: 771952, 9: 314529196, 10: None
+            }
+            next_run = len(self.results) + 2  # +2 because we start at run length 2
+            if next_run in known_positions and known_positions[next_run]:
+                remaining = known_positions[next_run] - self.current_position
+                if remaining > 0:
+                    eta_seconds = remaining / self.rate
+                    next_pattern_estimate = {
+                        "next_run_length": next_run,
+                        "expected_position": known_positions[next_run],
+                        "digits_remaining": remaining,
+                        "eta_seconds": eta_seconds,
+                        "eta_formatted": self._format_elapsed(eta_seconds)
+                    }
 
         status = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": self._format_timestamp(now),
+            "timestamp_unix": now,
+            "event": event,
             "running": self.running,
             "target_digits": self.max_digits,
             "target_digits_formatted": format_number(self.max_digits),
-            "current_position": position,
-            "current_position_formatted": format_number(position),
-            "percent_complete": round(percent, 4),
+            "current_position": self.current_position,
+            "current_position_formatted": format_number(self.current_position),
+            "percent_complete": round((self.current_position / self.max_digits * 100), 4) if self.max_digits > 0 else 0,
             "elapsed_seconds": elapsed,
-            "elapsed_formatted": elapsed_fmt,
-            "rate": rate,
-            "rate_formatted": f"{format_number(int(rate))}/s" if rate > 0 else "0/s",
-            "eta_seconds": eta["seconds"],
-            "eta_formatted": eta["formatted"],
-            "patterns_found": len(results),
+            "elapsed_formatted": self._format_elapsed(elapsed),
+            "rate": self.rate,
+            "rate_formatted": f"{format_number(int(self.rate))}/s" if self.rate > 0 else "0/s",
+            "patterns_found": len(self.results),
             "max_run_searching": self.max_run,
-            "longest_run_found": max(results.keys()) if results else 0,
-            "results": [
-                {
-                    "run_length": k,
-                    "sequence": v[0],
-                    "position": v[1],
-                    "position_formatted": f"{v[1]:,}"
-                }
-                for k, v in sorted(results.items())
-            ],
-            "start_time": datetime.fromtimestamp(self.start_time).isoformat()
+            "longest_run_found": self.results[-1]["run_length"] if self.results else 0,
+            "next_pattern_estimate": next_pattern_estimate,
+            "results": self.results,
+            "start_time": self._format_timestamp(self.start_time),
+            "start_time_unix": self.start_time
         }
 
-        # Write to website directory
         filepath = os.path.join(WEBSITE_DATA_DIR, LIVE_DATA_FILE)
         try:
             os.makedirs(WEBSITE_DATA_DIR, exist_ok=True)
@@ -240,26 +265,10 @@ class LiveStatusUpdater:
         except Exception as e:
             print(f"\nWarning: Could not write live status: {e}")
 
-    def _update_loop(self):
-        """Background thread that periodically writes status."""
-        while self.running:
-            self._write_status()
-            time.sleep(LIVE_UPDATE_INTERVAL)
-
-    def start(self):
-        """Start the background update thread."""
-        self.running = True
-        self.start_time = time.time()
-        self.thread = threading.Thread(target=self._update_loop, daemon=True)
-        self.thread.start()
-        print(f"Live status updates enabled: {WEBSITE_DATA_DIR}/{LIVE_DATA_FILE}")
-
     def stop(self):
-        """Stop the background update thread and write final status."""
+        """Mark search as stopped and write final status."""
         self.running = False
-        if self.thread:
-            self.thread.join(timeout=2)
-        self._write_status()  # Final update
+        self._write_status("Search completed")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -520,16 +529,19 @@ def compute_with_mpmath(max_digits: int, max_run: int = DEFAULT_MAX_RUN,
                 print(f"\nReached computation limit at position {pos:,}")
                 break
 
-            finder.process_chunk(chunk)
+            new_patterns = finder.process_chunk(chunk)
             pos += len(chunk)
 
             # Calculate rate
             elapsed = time.time() - finder.start_time
             rate = finder.total_pos / elapsed if elapsed > 0 else 0
 
-            # Update live status
+            # Update live status position tracking
             if live_updater:
                 live_updater.update(finder.total_pos, finder.results, rate)
+                # Notify about new patterns found
+                for run_len, seq, pattern_pos in new_patterns:
+                    live_updater.pattern_found(run_len, seq, pattern_pos)
 
             # Progress update
             if pos - last_progress >= PROGRESS_INTERVAL // 10:
