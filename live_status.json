@@ -1,14 +1,14 @@
 {
-  "timestamp": "2026-01-25 18:08:06.739",
-  "timestamp_unix": 1769382486.7395468,
+  "timestamp": "2026-01-25 18:17:16.584",
+  "timestamp_unix": 1769383036.584728,
   "event": "Search started",
   "running": true,
-  "target_digits": 10000000000000,
-  "target_digits_formatted": "10.00T",
+  "target_digits": 1250000000,
+  "target_digits_formatted": "1.25B",
   "current_position": 0,
   "current_position_formatted": "0",
   "percent_complete": 0.0,
-  "elapsed_seconds": 0.0,
+  "elapsed_seconds": 9.5367431640625e-07,
   "elapsed_formatted": "0ms",
   "rate": 0,
   "rate_formatted": "0/s",
@@ -16,7 +16,8 @@
   "max_run_searching": 100,
   "longest_run_found": 0,
   "next_pattern_estimate": null,
+  "eta_completion": null,
   "results": [],
-  "start_time": "2026-01-25 18:08:06.739",
-  "start_time_unix": 1769382486.7395468
+  "start_time": "2026-01-25 18:17:16.584",
+  "start_time_unix": 1769383036.584727
 }
