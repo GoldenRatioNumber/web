@@ -1,14 +1,14 @@
 {
-  "timestamp": "2026-01-25T17:50:49.308302",
+  "timestamp": "2026-01-25T17:53:29.817606",
   "running": true,
-  "target_digits": 1000000000,
-  "target_digits_formatted": "1.00B",
+  "target_digits": 500000000,
+  "target_digits_formatted": "500.00M",
   "current_position": 0,
   "current_position_formatted": "0",
   "percent_complete": 0.0,
-  "elapsed_seconds": 7.700920104980469e-05,
-  "elapsed_formatted": "0 seconds",
-  "rate": 0,
+  "elapsed_seconds": 15.107086658477783,
+  "elapsed_formatted": "15 seconds",
+  "rate": 0.0,
   "rate_formatted": "0/s",
   "eta_seconds": null,
   "eta_formatted": "Calculating...",
@@ -16,5 +16,5 @@
   "max_run_searching": 100,
   "longest_run_found": 0,
   "results": [],
-  "start_time": "2026-01-25T17:50:49.308220"
+  "start_time": "2026-01-25T17:53:14.710317"
 }
