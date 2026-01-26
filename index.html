@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Golden Ratio Numbers - Run Finder</title>
     <meta name="description" content="Discovering repeating digit patterns in the Golden Ratio (phi = 1.618033988749...)">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,12 +14,21 @@
             box-sizing: border-box;
         }
 
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
         body {
             font-family: 'Space Mono', monospace;
             background: #ffffff;
             color: #1a1a2e;
             min-height: 100vh;
             overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            position: relative;
         }
 
         #canvas-container {
@@ -48,6 +57,8 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 40px 20px;
+            overflow-x: hidden;
+            width: 100%;
         }
 
         header {
@@ -131,6 +142,8 @@
             margin: 30px 0;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(57, 255, 20, 0.3);
+            overflow: hidden;
+            max-width: 100%;
         }
 
         .section h2 {
@@ -150,10 +163,17 @@
             filter: drop-shadow(0 0 5px rgba(57, 255, 20, 0.5));
         }
 
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 20px;
+        }
+
         .results-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            min-width: 500px;
         }
 
         .results-table th,
@@ -213,8 +233,8 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
             margin-top: 20px;
         }
 
@@ -246,10 +266,11 @@
 
         .timeline-item {
             display: flex;
-            gap: 20px;
+            flex-wrap: wrap;
+            gap: 10px 20px;
             padding: 20px 0;
             border-left: 3px solid #39ff14;
-            padding-left: 30px;
+            padding-left: 20px;
             position: relative;
         }
 
@@ -268,7 +289,14 @@
         .timeline-date {
             font-weight: bold;
             color: #228B22;
-            min-width: 150px;
+            min-width: 120px;
+            flex-shrink: 0;
+        }
+
+        .timeline-content {
+            flex: 1;
+            min-width: 0;
+            word-break: break-word;
         }
 
         .code-block {
@@ -796,38 +824,59 @@
            RESPONSIVE STYLES - MOBILE PHONES
            ============================================ */
         @media (max-width: 768px) {
+            html, body {
+                overflow-x: hidden !important;
+                width: 100% !important;
+                max-width: 100vw !important;
+            }
+            .content {
+                padding: 20px 12px;
+                overflow-x: hidden;
+            }
             .phi-symbol {
-                font-size: 70px;
+                font-size: 60px;
             }
             h1 {
-                font-size: 1.5rem;
+                font-size: 1.4rem;
+                word-break: break-word;
             }
             .subtitle {
-                font-size: 1rem;
+                font-size: 0.95rem;
             }
             .phi-value {
-                font-size: 0.8rem;
-                letter-spacing: 1px;
+                font-size: 0.75rem;
+                letter-spacing: 0.5px;
                 word-break: break-all;
+                max-width: 100%;
+                overflow-wrap: break-word;
             }
             .status-banner {
-                padding: 10px 15px;
-                font-size: 0.75rem;
-                border-radius: 25px;
+                padding: 10px 12px;
+                font-size: 0.7rem;
+                border-radius: 20px;
                 flex-wrap: wrap;
                 justify-content: center;
                 text-align: center;
+                max-width: 100%;
             }
             .status-banner span {
                 line-height: 1.4;
+                word-break: break-word;
             }
             .section {
-                padding: 20px 15px;
-                border-radius: 15px;
+                padding: 18px 12px;
+                border-radius: 12px;
+                margin: 15px 0;
+                overflow: hidden;
             }
             .section h2 {
-                font-size: 1.2rem;
+                font-size: 1.1rem;
                 flex-wrap: wrap;
+                word-break: break-word;
+            }
+            .section p {
+                font-size: 0.85rem;
+                word-break: break-word;
             }
 
             /* Stats Grid - 2 columns on mobile */
@@ -920,6 +969,25 @@
                 font-size: 0.75rem;
             }
 
+            /* Timeline - Stack on mobile */
+            .timeline-item {
+                flex-direction: column;
+                padding-left: 15px;
+                gap: 5px;
+            }
+            .timeline-item::before {
+                left: -7px;
+                width: 11px;
+                height: 11px;
+            }
+            .timeline-date {
+                font-size: 0.85rem;
+                min-width: auto;
+            }
+            .timeline-content {
+                font-size: 0.85rem;
+            }
+
             /* Footer */
             footer {
                 padding: 25px 15px;
@@ -928,57 +996,78 @@
         }
 
         /* ============================================
-           RESPONSIVE STYLES - SMALL PHONES
+           RESPONSIVE STYLES - SMALL PHONES (iPhone SE, etc)
            ============================================ */
         @media (max-width: 480px) {
+            html, body {
+                overflow-x: hidden !important;
+                width: 100% !important;
+            }
             .content {
-                padding: 20px 10px;
+                padding: 15px 8px;
+                overflow-x: hidden;
             }
             .phi-symbol {
-                font-size: 55px;
+                font-size: 48px;
             }
             h1 {
-                font-size: 1.25rem;
+                font-size: 1.1rem;
             }
             .subtitle {
-                font-size: 0.9rem;
+                font-size: 0.8rem;
             }
             .phi-value {
-                font-size: 0.7rem;
+                font-size: 0.6rem;
+                letter-spacing: 0;
             }
             .status-banner {
-                padding: 8px 12px;
-                font-size: 0.65rem;
-                margin: 20px 0;
-            }
-            .section {
-                padding: 15px 12px;
+                padding: 8px 10px;
+                font-size: 0.6rem;
                 margin: 15px 0;
             }
+            .section {
+                padding: 12px 10px;
+                margin: 12px 0;
+                border-radius: 10px;
+            }
             .section h2 {
-                font-size: 1rem;
-                gap: 8px;
+                font-size: 0.95rem;
+                gap: 6px;
             }
             .section h2 svg {
-                width: 22px;
-                height: 22px;
+                width: 20px;
+                height: 20px;
+            }
+            .section p {
+                font-size: 0.75rem;
             }
 
             /* Stats Grid - 2 columns, smaller */
             .stats-grid {
-                gap: 8px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
             }
             .stat-card {
-                padding: 12px 8px;
+                padding: 10px 6px;
             }
             .stat-value {
-                font-size: 1.1rem;
+                font-size: 1rem;
             }
             .stat-label {
-                font-size: 0.7rem;
+                font-size: 0.65rem;
+            }
+
+            /* Table wrapper for horizontal scroll */
+            .table-wrapper {
+                margin: 10px -10px;
+                padding: 0 10px;
+                width: calc(100% + 20px);
             }
 
             /* Results Table - Very compact */
+            .results-table {
+                min-width: 450px;
+            }
             .results-table th,
             .results-table td {
                 padding: 8px 5px;
@@ -1114,24 +1203,26 @@
                 Discovered Patterns
             </h2>
             <p>First occurrence of consecutive identical digits in &#966;:</p>
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>Run</th>
-                        <th>Sequence</th>
-                        <th>Decimal Place</th>
-                        <th>Timing</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="5" style="text-align: center; color: #888; padding: 30px;">
-                            Loading experiment data...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-wrapper">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Run</th>
+                            <th>Sequence</th>
+                            <th>Decimal Place</th>
+                            <th>Timing</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #888; padding: 30px;">
+                                Loading experiment data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- DIAGONAL PATTERNS SECTION -->
@@ -1164,24 +1255,26 @@
                 </div>
             </div>
 
-            <table class="results-table" style="margin-top: 20px;">
-                <thead>
-                    <tr>
-                        <th>Pattern</th>
-                        <th>Sequence</th>
-                        <th>Decimal Place</th>
-                        <th>Timing</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="diagonal-results-body">
-                    <tr>
-                        <td colspan="5" style="text-align: center; color: #888; padding: 30px;">
-                            Loading diagonal pattern data...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-wrapper">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Pattern</th>
+                            <th>Sequence</th>
+                            <th>Decimal Place</th>
+                            <th>Timing</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="diagonal-results-body">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #888; padding: 30px;">
+                                Loading diagonal pattern data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="section">
