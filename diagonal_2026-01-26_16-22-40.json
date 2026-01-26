@@ -1,21 +1,21 @@
 {
   "run_file": "diagonal_2026-01-26_16-22-40.json",
   "search_type": "diagonal",
-  "timestamp": "2026-01-26 16:22:47.872",
-  "timestamp_unix": 1769462567.872673,
-  "event": "Found 22 at position 62",
+  "timestamp": "2026-01-26 16:22:48.428",
+  "timestamp_unix": 1769462568.428577,
+  "event": "Found 333 at position 158",
   "running": true,
   "target_digits": 1600000,
   "target_digits_formatted": "1.60M",
   "current_position": 0,
   "current_position_formatted": "0",
   "percent_complete": 0.0,
-  "elapsed_seconds": 7.518537998199463,
-  "elapsed_formatted": "7.519s",
+  "elapsed_seconds": 8.074441909790039,
+  "elapsed_formatted": "8.074s",
   "rate": 0,
   "rate_formatted": "0/s",
-  "patterns_found": 2,
-  "patterns_remaining": 7,
+  "patterns_found": 3,
+  "patterns_remaining": 6,
   "eta_completion": null,
   "results": [
     {
@@ -43,6 +43,19 @@
       "elapsed_total_formatted": "7.518s",
       "elapsed_since_last_seconds": 0.5639090538024902,
       "elapsed_since_last_formatted": "564ms"
+    },
+    {
+      "digit": 3,
+      "pattern": "333",
+      "length": 3,
+      "position": 158,
+      "position_formatted": "158",
+      "found_at_timestamp": "2026-01-26 16:22:48.428",
+      "found_at_unix": 1769462568.428527,
+      "elapsed_total_seconds": 8.074392080307007,
+      "elapsed_total_formatted": "8.074s",
+      "elapsed_since_last_seconds": 0.5559420585632324,
+      "elapsed_since_last_formatted": "556ms"
     }
   ],
   "start_time": "2026-01-26 16:22:40.354",
