@@ -1142,6 +1142,56 @@
             </table>
         </div>
 
+        <!-- DIAGONAL PATTERNS SECTION -->
+        <div class="section" id="diagonal-section">
+            <h2>
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 4l16 16M4 8l12 12M4 12l8 8M8 4l12 12M12 4l8 8M16 4l4 4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                </svg>
+                Diagonal Patterns
+                <span id="diagonal-live-indicator" style="margin-left: 15px;"></span>
+            </h2>
+            <p>Finding patterns where digit N repeats N times: 1, 22, 333, 4444, 55555, 666666, 7777777, 88888888, 999999999</p>
+
+            <div class="stats-grid" id="diagonal-stats-grid" style="margin-top: 20px;">
+                <div class="stat-card" id="diagonal-stat-target">
+                    <div class="stat-value">--</div>
+                    <div class="stat-label">Target Digits</div>
+                </div>
+                <div class="stat-card" id="diagonal-stat-searched">
+                    <div class="stat-value">--</div>
+                    <div class="stat-label">Digits Searched</div>
+                </div>
+                <div class="stat-card" id="diagonal-stat-patterns">
+                    <div class="stat-value">--</div>
+                    <div class="stat-label">Patterns Found</div>
+                </div>
+                <div class="stat-card" id="diagonal-stat-elapsed">
+                    <div class="stat-value">--</div>
+                    <div class="stat-label">Elapsed Time</div>
+                </div>
+            </div>
+
+            <table class="results-table" style="margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th>Pattern</th>
+                        <th>Sequence</th>
+                        <th>Decimal Place</th>
+                        <th>Timing</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="diagonal-results-body">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #888; padding: 30px;">
+                            Loading diagonal pattern data...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
         <div class="section">
             <h2>
                 <svg viewBox="0 0 24 24">
@@ -2138,6 +2188,212 @@ KNOWN_PATTERNS = {
             document.addEventListener('DOMContentLoaded', startLiveUpdates);
         } else {
             startLiveUpdates();
+        }
+
+        // =====================================================================
+        // DIAGONAL PATTERNS - Live Updates
+        // =====================================================================
+        const DIAGONAL_INDEX_URL = 'diagonal_runs_index.json';
+        let diagonalData = null;
+        let diagonalRunFile = null;
+        let diagonalLastPatternCount = 0;
+
+        // All diagonal patterns we're looking for
+        const DIAGONAL_PATTERNS = {
+            1: "1",
+            2: "22",
+            3: "333",
+            4: "4444",
+            5: "55555",
+            6: "666666",
+            7: "7777777",
+            8: "88888888",
+            9: "999999999"
+        };
+
+        // Diagonal elements
+        const diagonalElements = {
+            targetDigits: null,
+            digitsSearched: null,
+            patternsFound: null,
+            elapsedTime: null,
+            resultsBody: null,
+            liveIndicator: null
+        };
+
+        function initDiagonalElements() {
+            diagonalElements.targetDigits = document.querySelector('#diagonal-stat-target .stat-value');
+            diagonalElements.digitsSearched = document.querySelector('#diagonal-stat-searched .stat-value');
+            diagonalElements.patternsFound = document.querySelector('#diagonal-stat-patterns .stat-value');
+            diagonalElements.elapsedTime = document.querySelector('#diagonal-stat-elapsed .stat-value');
+            diagonalElements.resultsBody = document.getElementById('diagonal-results-body');
+            diagonalElements.liveIndicator = document.getElementById('diagonal-live-indicator');
+        }
+
+        function updateDiagonalStats(data) {
+            if (diagonalElements.targetDigits) {
+                diagonalElements.targetDigits.textContent = data.target_digits_formatted || '--';
+            }
+            if (diagonalElements.digitsSearched) {
+                diagonalElements.digitsSearched.textContent = data.current_position_formatted || '0';
+            }
+            if (diagonalElements.patternsFound) {
+                diagonalElements.patternsFound.textContent = `${data.patterns_found || 0}/9`;
+            }
+        }
+
+        function updateDiagonalElapsed() {
+            if (!diagonalData || !diagonalElements.elapsedTime) return;
+
+            let elapsed;
+            if (diagonalData.running) {
+                const lastUpdateUnix = diagonalData.timestamp_unix * 1000;
+                const timeSinceUpdate = Date.now() - lastUpdateUnix;
+                elapsed = (diagonalData.elapsed_seconds * 1000) + timeSinceUpdate;
+            } else {
+                elapsed = diagonalData.elapsed_seconds * 1000;
+            }
+            diagonalElements.elapsedTime.textContent = formatElapsed(elapsed);
+        }
+
+        function updateDiagonalLiveIndicator(isLive) {
+            if (!diagonalElements.liveIndicator) return;
+
+            if (isLive) {
+                diagonalElements.liveIndicator.innerHTML = `
+                    <span style="display: inline-flex; align-items: center; gap: 8px; background: #ff0000; color: white; padding: 4px 10px; border-radius: 15px; font-weight: bold; font-size: 0.75rem; animation: livePulse 1.5s ease-in-out infinite;">
+                        <span style="width: 8px; height: 8px; background: white; border-radius: 50%; animation: liveDot 1s ease-in-out infinite;"></span>
+                        LIVE
+                    </span>
+                `;
+            } else {
+                diagonalElements.liveIndicator.innerHTML = `
+                    <span style="display: inline-flex; align-items: center; gap: 8px; background: #666; color: white; padding: 4px 10px; border-radius: 15px; font-weight: bold; font-size: 0.75rem;">
+                        <span style="width: 8px; height: 8px; background: #999; border-radius: 50%;"></span>
+                        STOPPED
+                    </span>
+                `;
+            }
+        }
+
+        function generateDiagonalTable(data) {
+            if (!diagonalElements.resultsBody) return;
+
+            const results = data.results || [];
+            const foundDigits = new Set(results.map(r => r.digit));
+
+            let html = '';
+
+            // Generate rows for all 9 patterns
+            for (let digit = 1; digit <= 9; digit++) {
+                const pattern = DIAGONAL_PATTERNS[digit];
+                const result = results.find(r => r.digit === digit);
+
+                if (result) {
+                    const foundTime = result.found_at_timestamp || '';
+                    const totalElapsed = result.elapsed_total_formatted || '--';
+                    const sinceLast = result.elapsed_since_last_formatted || '--';
+
+                    html += `
+                        <tr>
+                            <td>${digit} × ${digit}</td>
+                            <td class="run-sequence">${pattern}</td>
+                            <td class="position">${result.position_formatted}</td>
+                            <td style="font-size: 0.75em; color: #888;">
+                                <div>Found: <span style="color:#39ff14;">${foundTime}</span></div>
+                                <div>Total: <span style="color:#FFD700;">${totalElapsed}</span></div>
+                                <div>Since last: <span style="color:#00BFFF;">${sinceLast}</span></div>
+                            </td>
+                            <td><span class="found-badge">FOUND</span></td>
+                        </tr>
+                    `;
+                } else if (data.running) {
+                    html += `
+                        <tr>
+                            <td>${digit} × ${digit}</td>
+                            <td class="run-sequence">${pattern}</td>
+                            <td class="position">Searching...</td>
+                            <td></td>
+                            <td><span class="searching-badge">SEARCHING</span></td>
+                        </tr>
+                    `;
+                } else {
+                    html += `
+                        <tr>
+                            <td>${digit} × ${digit}</td>
+                            <td class="run-sequence">${pattern}</td>
+                            <td class="position">--</td>
+                            <td></td>
+                            <td><span class="searching-badge">PENDING</span></td>
+                        </tr>
+                    `;
+                }
+            }
+
+            diagonalElements.resultsBody.innerHTML = html;
+        }
+
+        async function fetchDiagonalData() {
+            try {
+                const indexResponse = await fetch(DIAGONAL_INDEX_URL + '?t=' + Date.now());
+                if (!indexResponse.ok) {
+                    console.log('No diagonal index found');
+                    return;
+                }
+                const index = await indexResponse.json();
+
+                if (!index.latest) {
+                    if (diagonalElements.resultsBody) {
+                        diagonalElements.resultsBody.innerHTML = `
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #888; padding: 30px;">
+                                    No diagonal pattern searches yet. Run: python diagonal_finder.py
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    return;
+                }
+
+                if (diagonalRunFile !== index.latest) {
+                    console.log('Diagonal: Switching to run file:', index.latest);
+                    diagonalRunFile = index.latest;
+                }
+
+                const dataResponse = await fetch(diagonalRunFile + '?t=' + Date.now());
+                if (!dataResponse.ok) {
+                    console.log('Could not fetch diagonal run file:', diagonalRunFile);
+                    return;
+                }
+                const data = await dataResponse.json();
+
+                diagonalData = data;
+                updateDiagonalStats(data);
+                generateDiagonalTable(data);
+                updateDiagonalLiveIndicator(data.running);
+
+                console.log('Diagonal data updated:', data.run_file, 'Patterns:', data.patterns_found);
+            } catch (error) {
+                console.log('Diagonal fetch error:', error.message);
+            }
+        }
+
+        function startDiagonalUpdates() {
+            initDiagonalElements();
+            fetchDiagonalData();
+
+            // Check for updates periodically
+            setInterval(fetchDiagonalData, CHECK_INTERVAL);
+
+            // Update elapsed timer every 10ms
+            setInterval(updateDiagonalElapsed, 10);
+        }
+
+        // Start diagonal updates when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startDiagonalUpdates);
+        } else {
+            startDiagonalUpdates();
         }
 
         // =====================================================================
