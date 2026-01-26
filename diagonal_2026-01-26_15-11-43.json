@@ -1,0 +1,23 @@
+{
+  "run_file": "diagonal_2026-01-26_15-11-43.json",
+  "search_type": "diagonal",
+  "timestamp": "2026-01-26 15:11:43.941",
+  "timestamp_unix": 1769458303.941937,
+  "event": "Search started",
+  "running": true,
+  "target_digits": 1000000000000000,
+  "target_digits_formatted": "1000.00T",
+  "current_position": 0,
+  "current_position_formatted": "0",
+  "percent_complete": 0.0,
+  "elapsed_seconds": 9.5367431640625e-07,
+  "elapsed_formatted": "0ms",
+  "rate": 0,
+  "rate_formatted": "0/s",
+  "patterns_found": 0,
+  "patterns_remaining": 9,
+  "eta_completion": null,
+  "results": [],
+  "start_time": "2026-01-26 15:11:43.941",
+  "start_time_unix": 1769458303.941936
+}
