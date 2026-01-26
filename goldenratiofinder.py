@@ -55,9 +55,8 @@ DEFAULT_MAX_RUN = 100
 CHUNK_SIZE = 100_000_000  # 100 million digits per chunk for mpmath
 FILE_CHUNK_SIZE = 500_000_000  # 500MB chunks for file scanning
 PROGRESS_INTERVAL = 100_000_000  # Progress update every 100M digits
-LIVE_UPDATE_INTERVAL = 5  # Update live data every 5 seconds
-LIVE_DATA_FILE = "live_status.json"  # Local file for website to read
 WEBSITE_DATA_DIR = "/Users/david/goldenrationumbers"  # Directory for website files
+RUNS_INDEX_FILE = "runs_index.json"  # Index of all run files
 AUTO_PUBLISH = True  # Automatically push to GitHub when pattern found
 
 # Known ground truth (verified)
@@ -77,13 +76,14 @@ KNOWN_RUNS = {
 # 3) UTILITY FUNCTIONS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def git_publish(message: str = "Auto-update"):
-    """Push live_status.json to GitHub."""
+def git_publish(files: list, message: str = "Auto-update"):
+    """Push specified files to GitHub."""
     if not AUTO_PUBLISH:
         return
     try:
         os.chdir(WEBSITE_DATA_DIR)
-        subprocess.run(["git", "add", "live_status.json"], capture_output=True)
+        for f in files:
+            subprocess.run(["git", "add", f], capture_output=True)
         subprocess.run(["git", "commit", "-m", message], capture_output=True)
         result = subprocess.run(["git", "push"], capture_output=True, text=True)
         if result.returncode == 0:
@@ -92,6 +92,32 @@ def git_publish(message: str = "Auto-update"):
             print(f"\n  [Git push failed: {result.stderr[:50]}]")
     except Exception as e:
         print(f"\n  [Git error: {e}]")
+
+
+def update_runs_index(run_filename: str, is_latest: bool = True):
+    """Update the runs_index.json file with the current run."""
+    index_path = os.path.join(WEBSITE_DATA_DIR, RUNS_INDEX_FILE)
+
+    # Load existing index or create new
+    if os.path.exists(index_path):
+        with open(index_path, 'r') as f:
+            index = json.load(f)
+    else:
+        index = {"runs": [], "latest": None}
+
+    # Add run if not already in list
+    if run_filename not in index["runs"]:
+        index["runs"].insert(0, run_filename)  # Add to front (newest first)
+
+    # Update latest if specified
+    if is_latest:
+        index["latest"] = run_filename
+
+    # Write back
+    with open(index_path, 'w') as f:
+        json.dump(index, f, indent=2)
+
+    return index_path
 
 
 def format_time(seconds: float) -> str:
@@ -144,6 +170,9 @@ class LiveStatusUpdater:
         self.rate = 0
         self.running = False
         self.last_pattern_time = None
+        # Create unique filename based on start time
+        self.run_filename = f"run_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
+        self.run_filepath = os.path.join(WEBSITE_DATA_DIR, self.run_filename)
 
     def _format_elapsed(self, seconds: float) -> str:
         """Format elapsed time with milliseconds for short durations."""
@@ -169,12 +198,19 @@ class LiveStatusUpdater:
         return dt.strftime("%Y-%m-%d %H:%M:%S.") + f"{int((ts % 1) * 1000):03d}"
 
     def start(self):
-        """Mark search as started."""
+        """Mark search as started and create fresh JSON file."""
         self.running = True
         self.start_time = time.time()
         self.last_pattern_time = self.start_time
+        self.results = []  # Clear any previous results
+
+        # Write initial status and update index
         self._write_status("Search started")
-        print(f"Live status updates enabled: {WEBSITE_DATA_DIR}/{LIVE_DATA_FILE}")
+        update_runs_index(self.run_filename, is_latest=True)
+
+        # Push to GitHub
+        git_publish([self.run_filename, RUNS_INDEX_FILE], "New search started")
+        print(f"Live status: {self.run_filepath}")
 
     def update(self, position: int, results: dict, rate: float):
         """Update current position (no file write, just tracking)."""
@@ -206,7 +242,8 @@ class LiveStatusUpdater:
         self._write_status(f"Found run {run_length}: {sequence}")
 
         # Auto-publish to GitHub
-        git_publish(f"Pattern found: {run_length}-digit run '{sequence}' at position {position:,}")
+        git_publish([self.run_filename, RUNS_INDEX_FILE],
+                    f"Pattern found: {run_length}-digit run '{sequence}' at decimal place {position:,}")
 
     def _write_status(self, event: str = ""):
         """Write current status to JSON file."""
@@ -247,6 +284,7 @@ class LiveStatusUpdater:
             }
 
         status = {
+            "run_file": self.run_filename,
             "timestamp": self._format_timestamp(now),
             "timestamp_unix": now,
             "event": event,
@@ -270,18 +308,22 @@ class LiveStatusUpdater:
             "start_time_unix": self.start_time
         }
 
-        filepath = os.path.join(WEBSITE_DATA_DIR, LIVE_DATA_FILE)
         try:
             os.makedirs(WEBSITE_DATA_DIR, exist_ok=True)
-            with open(filepath, 'w') as f:
+            with open(self.run_filepath, 'w') as f:
                 json.dump(status, f, indent=2)
         except Exception as e:
-            print(f"\nWarning: Could not write live status: {e}")
+            print(f"\nWarning: Could not write status: {e}")
 
-    def stop(self):
-        """Mark search as stopped and write final status."""
+    def stop(self, event: str = "Search completed"):
+        """Mark search as stopped, write final status, and push to GitHub."""
         self.running = False
-        self._write_status("Search completed")
+        self._write_status(event)
+
+        # Update index and push final state to GitHub
+        update_runs_index(self.run_filename, is_latest=True)
+        git_publish([self.run_filename, RUNS_INDEX_FILE], f"Search ended: {event}")
+        print(f"\n  [Final status pushed to GitHub]")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -577,14 +619,21 @@ def compute_with_mpmath(max_digits: int, max_run: int = DEFAULT_MAX_RUN,
                 last_save = pos
 
     except KeyboardInterrupt:
-        print("\n\nInterrupted!")
+        print("\n\nInterrupted by user!")
         if save_file:
             finder.save_state(save_file)
             print(f"Progress saved to {save_file}")
 
-    # Stop live updates
+        # Stop live updates with interrupted status
+        if live_updater:
+            live_updater.stop("Search interrupted by user")
+
+        finder.print_results()
+        return finder.results
+
+    # Normal completion - stop live updates
     if live_updater:
-        live_updater.stop()
+        live_updater.stop("Search completed successfully")
 
     finder.print_results()
 
