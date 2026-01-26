@@ -1,4 +1,6 @@
 {
-  "runs": [],
-  "latest": null
+  "runs": [
+    "run_2026-01-26_07-06-54.json"
+  ],
+  "latest": "run_2026-01-26_07-06-54.json"
 }
