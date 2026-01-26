@@ -213,10 +213,10 @@ class LiveStatusUpdater:
         now = time.time()
         elapsed = now - self.start_time
 
-        # Known pattern positions for estimation
+        # Known pattern decimal places for estimation (subtract 2 from original positions)
         known_positions = {
-            2: 7, 3: 131, 4: 1218, 5: 6401, 6: 99790,
-            7: 771952, 8: 771952, 9: 314529196, 10: None
+            2: 5, 3: 129, 4: 1216, 5: 6399, 6: 99788,
+            7: 771950, 8: 771950, 9: 314529194, 10: None
         }
 
         # Estimate time to next pattern
@@ -321,7 +321,8 @@ class RunFinder:
 
             if self.run_len in self.remaining:
                 n = self.run_len
-                start_pos = self.total_pos - n + 1
+                # Subtract 2 to count decimal places (skip "1." prefix)
+                start_pos = self.total_pos - n + 1 - 2
                 seq = self.run_char * n
 
                 self.results[n] = (seq, start_pos)
@@ -334,12 +335,12 @@ class RunFinder:
                     print(f"\n{'='*70}")
                     print(f"FOUND RUN OF {n}!")
                     print(f"  Sequence: {seq[:50]}{'...' if len(seq) > 50 else ''}")
-                    print(f"  Position: {start_pos:,}")
+                    print(f"  Decimal Place: {start_pos:,}")
                     print(f"  Time: {format_time(elapsed)}")
                     print(f"  Remaining: {len(self.remaining)} run lengths to find")
                     print(f"{'='*70}\n")
                     # Auto-publish to GitHub
-                    git_publish(f"Found run of {n}: {seq[:20]} @ {start_pos:,}")
+                    git_publish(f"Found run of {n}: {seq[:20]} @ decimal place {start_pos:,}")
 
             if self.run_len > self.longest_found:
                 self.longest_found = self.run_len
