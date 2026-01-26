@@ -1,0 +1,49 @@
+# Golden Ratio Numbers - robots.txt
+# A Global Math Experiment for Science and Education
+
+User-agent: *
+Allow: /
+
+# Allow all search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# Allow AI crawlers for training and indexing
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# Sitemap location
+Sitemap: https://goldenrationumbers.com/sitemap.xml
+
+# Cache directives
+# Content may be cached for improved performance

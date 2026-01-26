@@ -1,0 +1,27 @@
+{
+  "name": "Golden Ratio Numbers - A Global Math Experiment",
+  "short_name": "Golden Ratio",
+  "description": "Discovering repeating digit patterns in the decimal expansion of phi. A worldwide mathematics experiment for students and researchers.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#FFD700",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "science", "mathematics"],
+  "lang": "en",
+  "dir": "ltr"
+}
