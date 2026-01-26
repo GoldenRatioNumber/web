@@ -318,8 +318,8 @@ class DiagonalFinder:
                 target_length = digit  # e.g., digit 3 needs length 3
                 if self.run_counts[digit] == target_length:
                     # Found it! Position is where the pattern starts
-                    # Subtract 1 for "1." prefix, result is 1-based decimal place
-                    start_pos = self.run_starts[digit] - 1
+                    # Subtract 2 for "1." prefix, result is 1-based decimal place
+                    start_pos = self.run_starts[digit] - 2
                     pattern = DIAGONAL_PATTERNS[digit]
 
                     self.results[digit] = start_pos
