@@ -1,32 +1,32 @@
 {
   "run_file": "run_2026-01-26_15-23-20.json",
-  "timestamp": "2026-01-26 16:41:36.787",
-  "timestamp_unix": 1769463696.787217,
-  "event": "Found run 8: 55555555",
-  "running": true,
+  "timestamp": "2026-01-27 05:27:19.113",
+  "timestamp_unix": 1769509639.113888,
+  "event": "Search interrupted by user",
+  "running": false,
   "target_digits": 3000000000,
   "target_digits_formatted": "3.00B",
-  "current_position": 100000000,
-  "current_position_formatted": "100.00M",
-  "percent_complete": 3.3333,
-  "elapsed_seconds": 4696.256381988525,
-  "elapsed_formatted": "1h 18m",
-  "rate": 21310.058744876827,
-  "rate_formatted": "21.31K/s",
+  "current_position": 300000000,
+  "current_position_formatted": "300.00M",
+  "percent_complete": 10.0,
+  "elapsed_seconds": 50638.58305311203,
+  "elapsed_formatted": "14h 3m",
+  "rate": 5985.508166708755,
+  "rate_formatted": "5.99K/s",
   "patterns_found": 7,
   "max_run_searching": 100,
   "longest_run_found": 8,
   "next_pattern_estimate": {
     "next_run_length": 9,
     "expected_position": 314529194,
-    "digits_remaining": 214529194,
-    "eta_seconds": 10067.03907147019,
-    "eta_formatted": "2h 47m"
+    "digits_remaining": 14529194,
+    "eta_seconds": 2427.395234511751,
+    "eta_formatted": "40m 27.4s"
   },
   "eta_completion": {
-    "digits_remaining": 2900000000,
-    "eta_seconds": 136085.96929359436,
-    "eta_formatted": "1.58 days"
+    "digits_remaining": 2700000000,
+    "eta_seconds": 451089.5190181732,
+    "eta_formatted": "5.22 days"
   },
   "results": [
     {
