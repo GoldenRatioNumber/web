@@ -1,32 +1,26 @@
 {
   "run_file": "run_2026-01-31_20-11-55.json",
-  "timestamp": "2026-01-31 21:31:32.274",
-  "timestamp_unix": 1769913092.274285,
-  "event": "Found run 8: 55555555",
+  "timestamp": "2026-02-02 04:23:23.784",
+  "timestamp_unix": 1770024203.784839,
+  "event": "Found run 9: 333333333",
   "running": true,
   "target_digits": 1600000000,
   "target_digits_formatted": "1.60B",
-  "current_position": 100000000,
-  "current_position_formatted": "100.00M",
-  "percent_complete": 6.25,
-  "elapsed_seconds": 4776.895054101944,
-  "elapsed_formatted": "1h 19m",
-  "rate": 20949.19307695558,
-  "rate_formatted": "20.95K/s",
-  "patterns_found": 7,
+  "current_position": 400000000,
+  "current_position_formatted": "400.00M",
+  "percent_complete": 25.0,
+  "elapsed_seconds": 115888.40560793877,
+  "elapsed_formatted": "1.34 days",
+  "rate": 3451.596371955744,
+  "rate_formatted": "3.45K/s",
+  "patterns_found": 8,
   "max_run_searching": 100,
-  "longest_run_found": 8,
-  "next_pattern_estimate": {
-    "next_run_length": 9,
-    "expected_position": 314529194,
-    "digits_remaining": 214529194,
-    "eta_seconds": 10240.45142034541,
-    "eta_formatted": "2h 50m"
-  },
+  "longest_run_found": 9,
+  "next_pattern_estimate": null,
   "eta_completion": {
-    "digits_remaining": 1500000000,
-    "eta_seconds": 71601.80320501328,
-    "eta_formatted": "19h 53m"
+    "digits_remaining": 1200000000,
+    "eta_seconds": 347665.2165212631,
+    "eta_formatted": "4.02 days"
   },
   "results": [
     {
@@ -112,6 +106,18 @@
       "elapsed_total_formatted": "1h 19m",
       "elapsed_since_last_seconds": 0.6067550182342529,
       "elapsed_since_last_formatted": "607ms"
+    },
+    {
+      "run_length": 9,
+      "sequence": "333333333",
+      "position": 314529194,
+      "position_formatted": "314,529,194",
+      "found_at_timestamp": "2026-02-02 04:23:23.784",
+      "found_at_unix": 1770024203.7847302,
+      "elapsed_total_seconds": 115888.4054992199,
+      "elapsed_total_formatted": "1.34 days",
+      "elapsed_since_last_seconds": 111111.5106022358,
+      "elapsed_since_last_formatted": "1.29 days"
     }
   ],
   "start_time": "2026-01-31 20:11:55.379",
